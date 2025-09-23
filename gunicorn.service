@@ -1,0 +1,23 @@
+[Unit]
+Description=GreatIdeas Gunicorn daemon
+Requires=greatideas.socket
+After=network.target
+
+[Service]
+Type=notify
+User=greatideas
+Group=greatideas
+RuntimeDirectory=gunicorn
+WorkingDirectory=/var/www/greatideas
+ExecStart=/var/www/greatideas/venv/bin/gunicorn \
+    --access-logfile - \
+    --workers 3 \
+    --bind unix:/run/gunicorn/greatideas.sock \
+    greatideas.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

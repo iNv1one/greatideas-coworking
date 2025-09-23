@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор кафе - GreatIdeas{% endblock %}
+
+{% block content %}
+<style>
+/* Hero секция */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 5rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 100" fill="%23ffffff10"><polygon points="0,0 1000,0 1000,80 0,100"/></svg>') bottom;
+    background-size: cover;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+/* Карточки кафе */
+.cafe-card {
+    border: none;
+    border-radius: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    overflow: hidden;
+    background: white;
+}
+
+.cafe-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.cafe-image {
+    height: 200px;
+    object-fit: cover;
+    border-radius: 25px 25px 0 0;
+}
+
+.cafe-logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    object-fit: cover;
+    border: 3px solid white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.cafe-info-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.cafe-info-item i {
+    width: 20px;
+    color: #667eea;
+}
+
+.btn-visit-cafe {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    border: none;
+    border-radius: 15px;
+    padding: 12px 24px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-visit-cafe:hover {
+    background: linear-gradient(45deg, #764ba2, #667eea);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.stats-counter {
+    background: linear-gradient(45deg, #FF6B35, #F39C12);
+    color: white;
+    border-radius: 20px;
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.floating-icon {
+    position: absolute;
+    opacity: 0.1;
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+.filter-section {
+    background: #f8f9ff;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+}
+</style>
+
+<!-- Hero секция -->
+<section class="hero-section">
+    <div class="container">
+        <div class="hero-content text-center">
+            <div class="floating-icon" style="top: 20%; left: 10%;">
+                <i class="fas fa-coffee" style="font-size: 3rem;"></i>
+            </div>
+            <div class="floating-icon" style="top: 30%; right: 15%; animation-delay: -2s;">
+                <i class="fas fa-utensils" style="font-size: 2.5rem;"></i>
+            </div>
+            <div class="floating-icon" style="bottom: 20%; left: 20%; animation-delay: -4s;">
+                <i class="fas fa-cookie-bite" style="font-size: 2rem;"></i>
+            </div>
+            
+            <h1 class="display-4 fw-bold mb-4">
+                <i class="fas fa-store me-3"></i>
+                Выберите кафе
+            </h1>
+            <p class="lead mb-4">
+                {{ cafes.count }} уютных места с уникальным меню и атмосферой
+            </p>
+            <div class="stats-counter d-inline-block">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <h4 class="mb-1">{{ cafes.count }}</h4>
+                        <small>Кафе</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="mb-1">100+</h4>
+                        <small>Блюд</small>
+                    </div>
+                    <div class="col-4">
+                        <h4 class="mb-1">24/7</h4>
+                        <small>Доступно</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Основной контент -->
+<div class="container my-5">
+    <!-- Список кафе -->
+    {% if cafes %}
+        <div class="row">
+            {% for cafe in cafes %}
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card cafe-card h-100">
+                        {% if cafe.cover_image %}
+                            <img src="{{ cafe.cover_image.url }}" class="cafe-image" alt="{{ cafe.name }}">
+                        {% else %}
+                            <div class="cafe-image d-flex align-items-center justify-content-center" 
+                                 style="background: linear-gradient(45deg, #667eea, #764ba2);">
+                                <i class="fas fa-store text-white" style="font-size: 4rem;"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <h5 class="card-title mb-0 fw-bold">{{ cafe.name }}</h5>
+                                {% if cafe.logo %}
+                                    <img src="{{ cafe.logo.url }}" alt="{{ cafe.name }}" class="cafe-logo">
+                                {% endif %}
+                            </div>
+                            
+                            {% if cafe.description %}
+                                <p class="card-text text-muted mb-3">{{ cafe.description|truncatewords:12 }}</p>
+                            {% endif %}
+                            
+                            <!-- Информация о кафе -->
+                            <div class="mb-4">
+                                <div class="cafe-info-item">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    <span>{{ cafe.address|default:"Адрес не указан" }}</span>
+                                </div>
+                                
+                                <div class="cafe-info-item">
+                                    <i class="fas fa-clock me-2"></i>
+                                    <span>{{ cafe.working_hours|default:"Круглосуточно" }}</span>
+                                </div>
+                                
+                                {% if cafe.phone %}
+                                    <div class="cafe-info-item">
+                                        <i class="fas fa-phone me-2"></i>
+                                        <span>{{ cafe.phone }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Кнопка перехода -->
+                            <div class="mt-auto">
+                                <a href="{% url 'cafes:detail' cafe.pk %}" class="btn btn-visit-cafe">
+                                    <i class="fas fa-utensils me-2"></i>
+                                    Посмотреть меню
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Если кафе нет -->
+        <div class="row">
+            <div class="col-lg-6 mx-auto text-center">
+                <div class="card">
+                    <div class="card-body py-5">
+                        <i class="fas fa-store-slash text-muted mb-3" style="font-size: 4rem;"></i>
+                        <h4 class="card-title">Кафе временно недоступны</h4>
+                        <p class="card-text text-muted">
+                            К сожалению, в данный момент все кафе закрыты или недоступны. 
+                            Попробуйте зайти позже.
+                        </p>
+                        <a href="{% url 'cafes:home' %}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>На главную
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Дополнительная информация -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h3 class="mb-4">Не можете выбрать?</h3>
+                <p class="text-muted mb-4">
+                    Каждое кафе в сети GreatIdeas имеет свою уникальную атмосферу и специализацию. 
+                    Попробуйте разные заведения и найдите свое любимое!
+                </p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-3">
+                        <i class="fas fa-coffee text-primary mb-2" style="font-size: 2rem;"></i>
+                        <h6>Свежий кофе</h6>
+                        <small class="text-muted">Каждый день</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <i class="fas fa-leaf text-primary mb-2" style="font-size: 2rem;"></i>
+                        <h6>Свежие продукты</h6>
+                        <small class="text-muted">Только качественные ингредиенты</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <i class="fas fa-heart text-primary mb-2" style="font-size: 2rem;"></i>
+                        <h6>С любовью</h6>
+                        <small class="text-muted">Готовим для вас</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль пользователя - GreatIdeas{% endblock %}
+
+{% block content %}
+<style>
+/* Обеспечиваем правильное позиционирование футера */
+main {
+    min-height: calc(100vh - 160px); /* Высота окна минус навбар и футер */
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-content {
+    flex: 1;
+}
+
+.profile-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 4rem 0;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 2rem;
+    margin-top: -3rem;
+    position: relative;
+    z-index: 2;
+}
+
+.user-avatar {
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: white;
+    margin: 0 auto 1rem;
+}
+
+.order-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-5px);
+}
+
+.status-badge {
+    border-radius: 20px;
+    font-size: 0.8rem;
+    padding: 0.5rem 1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    color: white;
+    text-align: center;
+}
+</style>
+
+<div class="profile-container">
+    <div class="profile-content">
+        <section class="profile-hero">
+            <div class="container">
+                <div class="text-center">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="fas fa-user me-3"></i>
+                        Мой профиль
+                    </h1>
+                    {% if user.is_authenticated %}
+                        <p class="lead">Добро пожаловать, {{ user.first_name|default:user.username }}!</p>
+                    {% else %}
+                        <p class="lead">Войдите в систему, чтобы увидеть свой профиль</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+<div class="container">
+    <div class="profile-card">
+        {% if user.is_authenticated %}
+            <div class="row">
+                <div class="col-md-4 text-center mb-4">
+                    <div class="user-avatar">
+                        {% if user_info.first_name %}
+                            {{ user_info.first_name|first|upper }}{{ user_info.last_name|first|default:""|upper }}
+                        {% else %}
+                            <i class="fas fa-user"></i>
+                        {% endif %}
+                    </div>
+                    <h4>{{ user_info.first_name|default:user_info.username|default:"Пользователь" }}</h4>
+                    <p class="text-muted">{{ user_info.email|default:"Не указан" }}</p>
+                    
+                    {% if user_info.date_joined %}
+                        <small class="text-muted d-block mb-3">
+                            Регистрация: {{ user_info.date_joined|date:"d.m.Y" }}
+                        </small>
+                    {% endif %}
+                    
+                    {% if orders %}
+                        <div class="stats-card mt-3">
+                            <h5 class="mb-1">{{ orders|length }}</h5>
+                            <small>Заказов всего</small>
+                        </div>
+                    {% else %}
+                        <div class="stats-card mt-3">
+                            <h5 class="mb-1">0</h5>
+                            <small>Заказов пока нет</small>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-8">
+                    <h5 class="mb-4">
+                        <i class="fas fa-history me-2 text-primary"></i>
+                        История заказов
+                    </h5>
+                    
+                    {% if orders %}
+                        <div class="row">
+                            {% for order in orders %}
+                                <div class="col-12 mb-3">
+                                    <div class="card order-card">
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <h6 class="card-title mb-1">
+                                                        Заказ #{{ order.id }}
+                                                    </h6>
+                                                    <p class="card-text text-muted mb-2">
+                                                        <i class="fas fa-store me-1"></i>
+                                                        {{ order.cafe.name }}
+                                                    </p>
+                                                    <p class="card-text">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-calendar me-1"></i>
+                                                            {{ order.created_at|date:"d.m.Y H:i" }}
+                                                        </small>
+                                                    </p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge status-badge bg-primary">
+                                                        {{ order.get_status_display }}
+                                                    </span>
+                                                    <div class="mt-2">
+                                                        <strong>{{ order.total_amount }} ₽</strong>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="text-center mt-4">
+                            <a href="#" class="btn btn-outline-primary">
+                                <i class="fas fa-plus me-2"></i>
+                                Загрузить еще
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-shopping-bag" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+                            <h5>Пока нет заказов</h5>
+                            <p>Вы еще не делали заказов. Начните с выбора кафе!</p>
+                            <a href="{% url 'cafes:list' %}" class="btn btn-primary">
+                                <i class="fas fa-utensils me-2"></i>
+                                Сделать первый заказ
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% else %}
+            <!-- Неавторизованный пользователь -->
+            <div class="empty-state">
+                <i class="fab fa-telegram" style="font-size: 3rem; margin-bottom: 1rem; color: #0088cc;"></i>
+                <h5>Добро пожаловать в GreatIdeas!</h5>
+                <p>Войдите через Telegram, чтобы увидеть свой профиль и историю заказов</p>
+                <div class="d-flex gap-3 justify-content-center">
+                    <a href="{% url 'users:telegram_login' %}" class="btn btn-primary">
+                        <i class="fab fa-telegram me-2"></i>
+                        Войти через Telegram
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+    </div>
+</div>
+{% endblock %}

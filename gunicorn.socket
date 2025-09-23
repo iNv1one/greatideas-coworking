@@ -1,0 +1,9 @@
+[Unit]
+Description=GreatIdeas Gunicorn socket
+
+[Socket]
+ListenStream=/run/gunicorn/greatideas.sock
+SocketUser=www-data
+
+[Install]
+WantedBy=sockets.target

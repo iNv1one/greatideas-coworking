@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}GreatIdeas - Главная{% endblock %}
+
+{% block content %}
+<style>
+/* Импорт шрифтов */
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.cdnfonts.com/css/blippo');
+
+/* Дополнительные варианты Blippo */
+@font-face {
+    font-family: 'Blippo';
+    src: local('Blippo'), 
+         local('Blippo Black'),
+         local('BlippoBlack'),
+         local('Blippo Local');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+/* Современный дизайн главной страницы */
+.hero-modern {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: white;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-image {
+    max-width: 200px;
+    max-height: 120px;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 20px rgba(0,0,0,0.3));
+}
+
+.logo-title {
+    font-family: "Blippo", "Blippo Local", "Blippo Black", "Unbounded", Impact, "Arial Black", sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    line-height: 1;
+    overflow-wrap: break-word;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
+.subtitle {
+    font-size: 1.5rem;
+    margin-bottom: 3rem;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+.main-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.main-btn {
+    padding: 1.5rem 2rem;
+    border-radius: 20px;
+    border: none;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.main-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.main-btn:hover::before {
+    left: 100%;
+}
+
+.main-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+    color: white;
+}
+
+.btn-order {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+}
+
+.btn-order:hover {
+    background: linear-gradient(135deg, #ff5252, #e53e3e);
+}
+
+.btn-wifi {
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+}
+
+.btn-wifi:hover {
+    background: linear-gradient(135deg, #26d0ce, #3d9970);
+}
+
+.btn-profile {
+    background: linear-gradient(135deg, #a8edea, #fed6e3);
+    color: #333 !important;
+}
+
+.btn-profile:hover {
+    background: linear-gradient(135deg, #96e6df, #fcc8d1);
+    color: #333 !important;
+}
+
+.main-btn i {
+    margin-right: 1rem;
+    font-size: 1.5rem;
+}
+
+/* Floating elements */
+.floating-element {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    animation: float 6s ease-in-out infinite;
+}
+
+.floating-element:nth-child(1) {
+    width: 80px;
+    height: 80px;
+    top: 20%;
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.floating-element:nth-child(2) {
+    width: 120px;
+    height: 120px;
+    top: 60%;
+    right: 15%;
+    animation-delay: 2s;
+}
+
+.floating-element:nth-child(3) {
+    width: 60px;
+    height: 60px;
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 4s;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-20px);
+    }
+}
+
+@media (max-width: 768px) {
+    .logo-title {
+        font-size: 2.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1.2rem;
+    }
+    
+    .main-btn {
+        padding: 1.2rem 1.5rem;
+        font-size: 1.1rem;
+    }
+}
+</style>
+
+<!-- Современная героическая секция -->
+<section class="hero-modern">
+    <!-- Floating elements для анимации -->
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    
+    <div class="container">
+        <div class="hero-content">
+            <div class="logo-container mb-4">
+                <img src="{% static 'images/logo.svg' %}" alt="GreatIdeas Logo" class="logo-image">
+                
+                <h1 class="logo-title">
+                    GreatIdeas
+                </h1>
+            </div>
+            <p class="subtitle">
+                Твое идеальное место для работы
+            </p>
+            
+            <div class="main-buttons">
+                <a href="{% url 'cafes:list' %}" class="main-btn btn-order">
+                    <i class="fas fa-utensils"></i>
+                    Заказать еду
+                </a>
+                
+                <a href="#" class="main-btn btn-wifi" onclick="connectWifi()">
+                    <i class="fas fa-wifi"></i>
+                    Подключить WiFi
+                </a>
+                
+                <a href="{% url 'users:profile' %}" class="main-btn btn-profile">
+                    <i class="fas fa-user"></i>
+                    Открыть профиль
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+function connectWifi() {
+    // Показываем информацию о WiFi
+    const modal = `
+        <div class="modal fade" id="wifiModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="fas fa-wifi me-2 text-primary"></i>
+                            Подключение к WiFi
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <div class="mb-4">
+                            <i class="fas fa-wifi text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="mb-3">GreatIdeas_Free</h4>
+                        <p class="text-muted mb-4">Пароль: <strong>greatideas2024</strong></p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                            Понятно
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modal);
+    const modalElement = new bootstrap.Modal(document.getElementById('wifiModal'));
+    modalElement.show();
+    
+    // Удаляем модал после закрытия
+    document.getElementById('wifiModal').addEventListener('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+</script>
+
+{% endblock %}

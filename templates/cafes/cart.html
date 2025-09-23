@@ -1,0 +1,595 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина - GreatIdeas{% endblock %}
+
+{% block content %}
+<style>
+/* Обеспечиваем правильное позиционирование футера */
+main {
+    min-height: calc(100vh - 160px); /* Высота окна минус навбар и футер */
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.cart-content {
+    flex: 1;
+}
+
+/* Стили для количества товара */
+.quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.quantity-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 2px solid #FF6B35;
+    background: white;
+    color: #FF6B35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+}
+
+.quantity-btn:hover {
+    background: #FF6B35;
+    color: white;
+}
+
+.quantity-display {
+    min-width: 50px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.remove-item-btn {
+    color: #dc3545;
+    border: none;
+    background: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.remove-item-btn:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.cart-item {
+    transition: all 0.3s ease;
+}
+
+.cart-item.removing {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+/* Стили для итогов */
+.total-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+}
+
+.checkout-btn {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.checkout-btn:hover {
+    background: linear-gradient(45deg, #20c997, #28a745);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.telegram-pay-btn {
+    background: linear-gradient(45deg, #0088cc, #229ED9);
+    border: none;
+    color: white;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.telegram-pay-btn:hover {
+    background: linear-gradient(45deg, #229ED9, #0088cc);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+}
+    border-radius: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.telegram-pay-btn:hover {
+    background: linear-gradient(45deg, #229ED9, #0088cc);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 136, 204, 0.4);
+    color: white;
+}
+
+.payment-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+
+<div class="cart-container">
+    <div class="container my-5 cart-content">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h1 class="display-5 fw-bold mb-4">
+                    <i class="fas fa-shopping-cart me-3"></i>Ваша корзина
+                </h1>
+                
+                {% if cart_items %}
+                    <!-- Товары в корзине -->
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            {% for cart_item in cart_items %}
+                                <div class="cart-item row align-items-center py-3 {% if not forloop.last %}border-bottom{% endif %}" 
+                                     data-cart-key="{{ cart_item.cart_key }}">
+                                    <div class="col-md-5">
+                                        <div class="d-flex align-items-start">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1">{{ cart_item.item.name }}</h6>
+                                                {% if cart_item.variant %}
+                                                    <small class="text-info d-block">
+                                                        <i class="fas fa-expand-arrows-alt me-1"></i>
+                                                        {{ cart_item.variant.name }} ({{ cart_item.variant.size }})
+                                                    </small>
+                                                {% endif %}
+                                                {% if cart_item.addons %}
+                                                    <small class="text-success d-block">
+                                                        <i class="fas fa-plus-circle me-1"></i>
+                                                        {% for addon in cart_item.addons %}
+                                                            {{ addon.name }}{% if not forloop.last %}, {% endif %}
+                                                        {% endfor %}
+                                                    </small>
+                                                {% endif %}
+                                                <small class="text-muted d-block">
+                                                    <i class="fas fa-store me-1"></i>{{ cart_item.item.cafe.name }}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 text-center">
+                                        <div class="quantity-controls">
+                                            <button class="quantity-btn quantity-decrease" 
+                                                    data-cart-key="{{ cart_item.cart_key }}" 
+                                                    data-current-quantity="{{ cart_item.quantity }}">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <span class="quantity-display">{{ cart_item.quantity }}</span>
+                                            <button class="quantity-btn quantity-increase" 
+                                                    data-cart-key="{{ cart_item.cart_key }}" 
+                                                    data-current-quantity="{{ cart_item.quantity }}">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-2 text-center">
+                                        <div class="small">
+                                            <div>{{ cart_item.base_price }} ₽</div>
+                                            {% if cart_item.variant_price > 0 %}
+                                                <div class="text-info">+{{ cart_item.variant_price }} ₽</div>
+                                            {% endif %}
+                                            {% if cart_item.addons_price > 0 %}
+                                                <div class="text-success">+{{ cart_item.addons_price }} ₽</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-2 text-center">
+                                        <strong class="text-primary item-total">{{ cart_item.total_price }} ₽</strong>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Итоги заказа -->
+                    <div class="total-section">
+                        <div class="row align-items-center">
+                            <div class="col-md-6">
+                                <h4 class="mb-2">
+                                    <i class="fas fa-calculator me-2"></i>
+                                    Итого к оплате:
+                                </h4>
+                                <p class="mb-0">
+                                    <small>{{ total_items }} товар{{ total_items|pluralize:"ов,а,ов" }}</small>
+                                </p>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <div class="h2 mb-3" id="totalPrice">{{ total_price }} ₽</div>
+                                
+                                <!-- Кнопки оплаты -->
+                                <div class="payment-buttons">
+                                    <!-- Telegram Payment кнопка -->
+                                    <button class="btn btn-primary mb-2 telegram-pay-btn" onclick="payWithTelegram()" style="width: 100%;">
+                                        <i class="fab fa-telegram-plane me-2"></i>
+                                        Оплатить через Telegram
+                                    </button>
+                                    
+                                    <!-- Обычная оплата -->
+                                    <button class="btn btn-success checkout-btn" onclick="proceedToCheckout()" style="width: 100%;">
+                                        <i class="fas fa-credit-card me-2"></i>
+                                        Оформить заказ
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопка продолжить покупки -->
+                    <div class="text-center mt-4">
+                        <a href="{% url 'cafes:list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Продолжить покупки
+                        </a>
+                    </div>
+                    
+                    <!-- Информация о доставке -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Информация о доставке</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-store me-2"></i>Самовывоз</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-clock me-2 text-primary"></i>15-30 минут</li>
+                                        <li><i class="fas fa-money-bill me-2 text-primary"></i>Бесплатно</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6><i class="fas fa-motorcycle me-2"></i>Доставка</h6>
+                                    <ul class="list-unstyled">
+                                        <li><i class="fas fa-clock me-2 text-primary"></i>30-60 минут</li>
+                                        <li><i class="fas fa-money-bill me-2 text-primary"></i>По тарифам кафе</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                {% else %}
+                    <!-- Пустая корзина -->
+                    <div class="text-center py-5">
+                        <div class="card">
+                            <div class="card-body py-5">
+                                <i class="fas fa-shopping-cart text-muted mb-4" style="font-size: 5rem;"></i>
+                                <h3 class="card-title">Ваша корзина пуста</h3>
+                                <p class="card-text text-muted mb-4">
+                                    Добавьте товары из меню, 
+                                    чтобы начать оформление заказа.
+                                </p>
+                                <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                    <a href="{% url 'cafes:list' %}" class="btn btn-primary">
+                                        <i class="fas fa-shopping-bag me-2"></i>Выбрать товары
+                                    </a>
+                                    <a href="{% url 'cafes:home' %}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-home me-2"></i>На главную
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Функции для управления корзиной
+function updateQuantity(cartKey, newQuantity) {
+    if (newQuantity < 1) {
+        removeItem(cartKey);
+        return;
+    }
+    
+    fetch('{% url "cafes:update_cart_item" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            cart_key: cartKey,
+            quantity: newQuantity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Перезагружаем страницу для обновления данных
+        } else {
+            showNotification('Ошибка при обновлении количества', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Ошибка при обновлении количества', 'error');
+    });
+}
+
+function removeItem(cartKey) {
+    if (!confirm('Удалить этот товар из корзины?')) {
+        return;
+    }
+    
+    const cartItem = document.querySelector(`[data-cart-key="${cartKey}"]`);
+    cartItem.classList.add('removing');
+    
+    fetch('{% url "cafes:remove_from_cart" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            cart_key: cartKey
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.cart_empty) {
+                location.reload(); // Если корзина пуста, перезагружаем страницу
+            } else {
+                // Удаляем элемент и обновляем итоги
+                cartItem.remove();
+                document.getElementById('totalPrice').textContent = data.total_price + ' ₽';
+                
+                // Обновляем счетчик в навбаре
+                updateCartCounter(data.total_items);
+            }
+            showNotification('Товар удален из корзины', 'success');
+        } else {
+            cartItem.classList.remove('removing');
+            showNotification('Ошибка при удалении товара', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        cartItem.classList.remove('removing');
+        showNotification('Ошибка при удалении товара', 'error');
+    });
+}
+
+function proceedToCheckout() {
+    alert('Функция оформления заказа будет добавлена позже!\n\nВ полной версии здесь будет:\n- Выбор способа получения\n- Ввод контактных данных\n- Выбор способа оплаты\n- Интеграция с Telegram Bot');
+}
+
+function payWithTelegram() {
+    // Проверяем, что мы в Telegram Web App
+    if (!window.Telegram || !window.Telegram.WebApp) {
+        alert('Эта функция доступна только в Telegram Web App');
+        return;
+    }
+    
+    const telegram = window.Telegram.WebApp;
+    const user = telegram.initDataUnsafe.user;
+    
+    if (!user) {
+        alert('Не удалось получить данные пользователя Telegram');
+        return;
+    }
+    
+    // Показываем индикатор загрузки
+    const telegramBtn = document.querySelector('.telegram-pay-btn');
+    const originalText = telegramBtn.innerHTML;
+    telegramBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создание инвойса...';
+    telegramBtn.disabled = true;
+    
+    // Получаем данные корзины
+    const cartData = getCartData();
+    
+    // Отправляем запрос на создание платежа
+    fetch('/api/orders/create-payment/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            telegram_id: user.id,
+            cart_data: cartData,
+            delivery_type: 'pickup',
+            customer_name: user.first_name + ' ' + (user.last_name || ''),
+            customer_phone: user.phone_number || '',
+            comment: ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        telegramBtn.innerHTML = originalText;
+        telegramBtn.disabled = false;
+        
+        if (data.success) {
+            showNotification('Инвойс отправлен в Telegram!', 'success');
+            
+            // Опционально: очищаем корзину после успешного создания заказа
+            // clearCart();
+        } else {
+            showNotification('Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        telegramBtn.innerHTML = originalText;
+        telegramBtn.disabled = false;
+        showNotification('Ошибка при создании платежа', 'error');
+    });
+}
+
+function getCartData() {
+    // Собираем данные корзины из DOM элементов
+    const cartItems = {};
+    
+    document.querySelectorAll('[data-cart-key]').forEach(element => {
+        const cartKey = element.dataset.cartKey;
+        const quantity = parseInt(element.dataset.currentQuantity || 1);
+        
+        // Парсим cart_key для получения item_id и других данных
+        const parts = cartKey.split('_');
+        if (parts.length >= 2) {
+            const itemId = parts[1];
+            
+            cartItems[cartKey] = {
+                item_id: itemId,
+                quantity: quantity,
+                variant_id: parts[2] !== 'None' ? parts[2] : null,
+                addon_ids: parts.length > 3 ? parts.slice(3).filter(id => id !== 'None') : []
+            };
+        }
+    });
+    
+    return cartItems;
+}
+
+// Обработчики событий для кнопок изменения количества
+document.addEventListener('DOMContentLoaded', function() {
+    // Кнопки уменьшения количества
+    document.querySelectorAll('.quantity-decrease').forEach(button => {
+        button.addEventListener('click', function() {
+            const cartKey = this.dataset.cartKey;
+            const currentQuantity = parseInt(this.dataset.currentQuantity);
+            
+            if (currentQuantity <= 1) {
+                // Если количество 1 или меньше, удаляем товар
+                removeItem(cartKey);
+            } else {
+                // Иначе уменьшаем количество
+                const newQuantity = currentQuantity - 1;
+                updateQuantity(cartKey, newQuantity);
+            }
+        });
+    });
+    
+    // Кнопки увеличения количества
+    document.querySelectorAll('.quantity-increase').forEach(button => {
+        button.addEventListener('click', function() {
+            const cartKey = this.dataset.cartKey;
+            const currentQuantity = parseInt(this.dataset.currentQuantity);
+            const newQuantity = currentQuantity + 1;
+            updateQuantity(cartKey, newQuantity);
+        });
+    });
+    
+    // Кнопки удаления товара (теперь не используются, но оставляем на случай если понадобятся)
+    document.querySelectorAll('.remove-button').forEach(button => {
+        button.addEventListener('click', function() {
+            const cartKey = this.dataset.cartKey;
+            removeItem(cartKey);
+        });
+    });
+});
+
+// Функция оплаты через Telegram
+function payWithTelegram() {
+    // Проверяем, что пользователь авторизован через Telegram
+    const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    
+    if (!telegramUser) {
+        alert('Для оплаты через Telegram необходимо открыть сайт в Telegram Web App');
+        return;
+    }
+    
+    // Собираем данные корзины
+    const cartData = {};
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const cartKey = item.dataset.cartKey;
+        const quantity = parseInt(item.querySelector('.quantity-display').textContent);
+        
+        // Здесь можно добавить больше данных о товаре, если нужно
+        cartData[cartKey] = {
+            quantity: quantity
+        };
+    });
+    
+    // Отправляем запрос на создание платежа
+    fetch('/api/orders/create-payment/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            telegram_id: telegramUser.id,
+            cart_data: cartData,
+            delivery_type: 'pickup',
+            customer_name: telegramUser.first_name + ' ' + (telegramUser.last_name || ''),
+            customer_phone: '',  // Telegram не всегда предоставляет телефон
+            comment: ''
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Инвойс отправлен в Telegram! Проверьте чат с ботом для оплаты.');
+            // Можно добавить редирект или очистку корзины
+        } else {
+            alert('Ошибка при создании платежа: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка при создании платежа');
+    });
+}
+
+function proceedToCheckout() {
+    alert('Обычная система оплаты пока не реализована. Используйте оплату через Telegram!');
+}
+</script>
+
+<!-- Скрытое поле для CSRF токена -->
+<input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+{% endblock %}

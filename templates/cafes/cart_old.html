@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}Корзина - GreatIdeas{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <h1 class="display-5 fw-bold mb-4">
+                <i class="fas fa-shopping-cart me-3"></i>Ваша корзина
+            </h1>
+            
+            {% if cart_items %}
+                <!-- Товары в корзине -->
+                <div class="card">
+                    <div class="card-body">
+                        {% for cart_item in cart_items %}
+                            <div class="row align-items-center py-3 {% if not forloop.last %}border-bottom{% endif %}">
+                                <div class="col-md-6">
+                                    <h6 class="mb-1">{{ cart_item.item.name }}</h6>
+                                    {% if cart_item.variant %}
+                                        <small class="text-info">{{ cart_item.variant.name }} ({{ cart_item.variant.size }})</small><br>
+                                    {% endif %}
+                                    {% if cart_item.addons %}
+                                        <small class="text-success">
+                                            Добавки: 
+                                            {% for addon in cart_item.addons %}
+                                                {{ addon.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </small><br>
+                                    {% endif %}
+                                    <small class="text-muted">{{ cart_item.item.cafe.name }}</small>
+                                    {% if cart_item.item.description %}
+                                        <p class="small text-muted mb-0">{{ cart_item.item.description|truncatewords:10 }}</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="col-md-2 text-center">
+                                    <span class="badge bg-secondary">{{ cart_item.quantity }} шт.</span>
+                                </div>
+                                
+                                <div class="col-md-2 text-center">
+                                    <div class="small">
+                                        <div>Базовая: {{ cart_item.base_price }} ₽</div>
+                                        {% if cart_item.variant_price > 0 %}
+                                            <div class="text-info">Размер: +{{ cart_item.variant_price }} ₽</div>
+                                        {% endif %}
+                                        {% if cart_item.addons_price > 0 %}
+                                            <div class="text-success">Добавки: +{{ cart_item.addons_price }} ₽</div>
+                                        {% endif %}
+                                    </div>
+                                    <strong>{{ cart_item.unit_price }} ₽</strong>
+                                </div>
+                                
+                                <div class="col-md-2 text-center">
+                                    <strong class="price">{{ cart_item.total }} ₽</strong>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        
+                        <!-- Итого -->
+                        <div class="row py-3 mt-3 bg-light rounded">
+                            <div class="col-md-8">
+                                <h5 class="mb-0">Итого к оплате:</h5>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <h4 class="price mb-0">{{ total_price }} ₽</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Кнопки действий -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <a href="{% url 'cafes:list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left me-2"></i>Продолжить покупки
+                        </a>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <button class="btn btn-success btn-lg" onclick="proceedToCheckout()">
+                            <i class="fas fa-credit-card me-2"></i>Оформить заказ
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Информация о доставке -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Информация о доставке</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-store me-2"></i>Самовывоз</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-clock me-2 text-primary"></i>15-30 минут</li>
+                                    <li><i class="fas fa-money-bill me-2 text-primary"></i>Бесплатно</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-motorcycle me-2"></i>Доставка</h6>
+                                <ul class="list-unstyled">
+                                    <li><i class="fas fa-clock me-2 text-primary"></i>30-60 минут</li>
+                                    <li><i class="fas fa-money-bill me-2 text-primary"></i>По тарифам кафе</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+            {% else %}
+                <!-- Пустая корзина -->
+                <div class="text-center py-5">
+                    <div class="card">
+                        <div class="card-body py-5">
+                            <i class="fas fa-shopping-cart text-muted mb-4" style="font-size: 5rem;"></i>
+                            <h3 class="card-title">Ваша корзина пуста</h3>
+                            <p class="card-text text-muted mb-4">
+                                Добавьте товары из меню любого из наших кафе, 
+                                чтобы начать оформление заказа.
+                            </p>
+                            <div class="d-flex justify-content-center gap-3 flex-wrap">
+                                <a href="{% url 'cafes:list' %}" class="btn btn-primary">
+                                    <i class="fas fa-store me-2"></i>Выбрать кафе
+                                </a>
+                                <a href="{% url 'cafes:home' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-home me-2"></i>На главную
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function proceedToCheckout() {
+    alert('Функция оформления заказа будет добавлена позже!\n\nВ полной версии здесь будет:\n- Выбор способа получения\n- Ввод контактных данных\n- Выбор способа оплаты\n- Интеграция с Telegram Bot');
+}
+</script>
+{% endblock %}

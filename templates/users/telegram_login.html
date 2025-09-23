@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+
+{% block title %}Вход через Telegram - GreatIdeas{% endblock %}
+
+{% block content %}
+<style>
+/* Обеспечиваем правильное позиционирование футера */
+main {
+    min-height: calc(100vh - 160px);
+    display: flex;
+    flex-direction: column;
+}
+
+.login-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.telegram-login-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 3rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.telegram-icon {
+    font-size: 4rem;
+    color: #0088cc;
+    margin-bottom: 1.5rem;
+}
+
+.telegram-btn {
+    background: linear-gradient(135deg, #0088cc, #229ed9);
+    border: none;
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: all 0.3s ease;
+    margin: 1rem 0;
+}
+
+.telegram-btn:hover {
+    background: linear-gradient(135deg, #0075b3, #1e8cc0);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,136,204,0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.info-text {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+
+.features-list li {
+    padding: 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.features-list i {
+    color: #28a745;
+    width: 20px;
+}
+
+.loading {
+    display: none;
+}
+</style>
+
+<div class="login-container">
+    <div class="container">
+        <div class="telegram-login-card text-center">
+            <i class="fab fa-telegram telegram-icon"></i>
+            
+            <h2 class="mb-3">Добро пожаловать в GreatIdeas!</h2>
+            <p class="info-text mb-4">
+                Для удобного заказа еды войдите через Telegram.<br>
+                Это быстро, безопасно и не требует дополнительной регистрации.
+            </p>
+            
+            <ul class="features-list">
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <span>Быстрый вход без пароля</span>
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <span>История заказов синхронизируется</span>
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <span>Уведомления о статусе заказа</span>
+                </li>
+                <li>
+                    <i class="fas fa-check-circle"></i>
+                    <span>Персональные предложения</span>
+                </li>
+            </ul>
+            
+            <button id="telegramLoginBtn" class="telegram-btn" onclick="openTelegramBot()">
+                <i class="fab fa-telegram"></i>
+                Открыть Telegram бота
+            </button>
+            
+            <div id="loading" class="loading">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <p class="mt-2">Авторизация...</p>
+            </div>
+            
+            <p class="info-text mt-3">
+                <i class="fas fa-shield-alt me-2"></i>
+                Мы не сохраняем ваши личные данные из Telegram.<br>
+                Используется только публичная информация профиля.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+// Инициализация Telegram Web App
+window.Telegram.WebApp.ready();
+window.Telegram.WebApp.expand();
+
+function openTelegramBot() {
+    // Открываем бота в Telegram
+    const botUsername = 'gi_coworking_bot';
+    const telegramUrl = `https://t.me/${botUsername}`;
+    
+    // Пытаемся открыть в Telegram приложении
+    window.open(telegramUrl, '_blank');
+    
+    // Показываем инструкцию
+    showNotification('Нажмите кнопку "Открыть GreatIdeas" в боте для входа в приложение!', 'info');
+}
+
+function loginWithTelegram() {
+    const btn = document.getElementById('telegramLoginBtn');
+    const loading = document.getElementById('loading');
+    
+    // Проверяем, запущено ли приложение в Telegram
+    if (!window.Telegram.WebApp.initData) {
+        // Если не в Telegram, показываем инструкцию
+        alert('Для входа откройте это приложение через Telegram бот.\n\nНапишите боту @gi_coworking_bot и нажмите кнопку "Открыть GreatIdeas"');
+        return;
+    }
+    
+    btn.style.display = 'none';
+    loading.style.display = 'block';
+    
+    // Отправляем данные на сервер
+    fetch('{% url "users:telegram_auth" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            initData: window.Telegram.WebApp.initData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification('Добро пожаловать, ' + data.user.first_name + '!', 'success');
+            // Перенаправляем на главную страницу
+            window.location.href = '{% url "cafes:home" %}';
+        } else {
+            throw new Error(data.error || 'Ошибка авторизации');
+        }
+    })
+    .catch(error => {
+        console.error('Ошибка:', error);
+        showNotification('Ошибка авторизации: ' + error.message, 'error');
+        btn.style.display = 'block';
+        loading.style.display = 'none';
+    });
+}
+
+// Автоматический вход только если мы в Telegram Web App
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
+        // Автоматически пробуем войти если уже в Telegram Web App
+        setTimeout(loginWithTelegram, 1000);
+    }
+});
+</script>
+{% endblock %}
