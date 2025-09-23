@@ -43,8 +43,27 @@ class TelegramPaymentService:
         from menu.models import MenuItem, MenuItemVariant, Addon
         
         # Определяем кафе (берем из первого товара)
+        print(f"DEBUG: cart_data = {cart_data}")
+        
+        # Проверяем формат данных корзины
+        if not cart_data:
+            raise ValueError("Корзина пуста")
+        
         first_item_data = next(iter(cart_data.values()))
-        first_item = MenuItem.objects.get(id=first_item_data['item_id'])
+        print(f"DEBUG: first_item_data = {first_item_data}")
+        
+        # Определяем item_id в зависимости от формата данных
+        if isinstance(first_item_data, int):
+            # Старый формат: {item_id: quantity}
+            first_item_id = next(iter(cart_data.keys()))
+        elif isinstance(first_item_data, dict) and 'item_id' in first_item_data:
+            # Новый формат: {key: {item_id: ..., quantity: ...}}
+            first_item_id = first_item_data['item_id']
+        else:
+            print(f"ERROR: Неизвестный формат данных корзины: {type(first_item_data)}, {first_item_data}")
+            raise ValueError(f"Неизвестный формат данных корзины: {first_item_data}")
+        
+        first_item = MenuItem.objects.get(id=first_item_id)
         cafe = first_item.cafe
         
         # Генерируем номер заказа
