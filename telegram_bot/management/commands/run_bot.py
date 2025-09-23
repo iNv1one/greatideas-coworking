@@ -5,6 +5,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from asgiref.sync import sync_to_async
 from cafes.models import Cafe
 from users.models import TelegramUser
 
@@ -35,23 +36,29 @@ class TelegramBot:
         """Обработчик команды /start"""
         user = update.effective_user
         
-        # Сохраняем или обновляем пользователя в базе данных
-        telegram_user, created = TelegramUser.objects.get_or_create(
-            telegram_id=user.id,
-            defaults={
-                'username': user.username or '',
-                'first_name': user.first_name or '',
-                'last_name': user.last_name or '',
-                'language_code': user.language_code or 'ru'
-            }
-        )
+        # Сохраняем или обновляем пользователя в базе данных (через sync_to_async)
+        @sync_to_async
+        def save_telegram_user():
+            telegram_user, created = TelegramUser.objects.get_or_create(
+                telegram_id=user.id,
+                defaults={
+                    'username': user.username or '',
+                    'first_name': user.first_name or '',
+                    'last_name': user.last_name or '',
+                    'language_code': user.language_code or 'ru'
+                }
+            )
+            
+            if not created:
+                # Обновляем данные существующего пользователя
+                telegram_user.username = user.username or ''
+                telegram_user.first_name = user.first_name or ''
+                telegram_user.last_name = user.last_name or ''
+                telegram_user.save()
+            
+            return telegram_user, created
         
-        if not created:
-            # Обновляем данные существующего пользователя
-            telegram_user.username = user.username or ''
-            telegram_user.first_name = user.first_name or ''
-            telegram_user.last_name = user.last_name or ''
-            telegram_user.save()
+        telegram_user, created = await save_telegram_user()
         
         welcome_text = f"""
 🎉 *Добро пожаловать в GreatIdeas!*
@@ -73,7 +80,7 @@ class TelegramBot:
         keyboard = [
             [InlineKeyboardButton("🏪 Выбрать кафе", callback_data="show_cafes")],
             [InlineKeyboardButton("ℹ️ О сервисе", callback_data="about_service")],
-            [InlineKeyboardButton("🌐 Открыть веб-сайт", url="http://127.0.0.1:8000/")],
+            [InlineKeyboardButton("🌐 Открыть веб-сайт", url="https://coworking.greatideas.ru/")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -149,7 +156,7 @@ class TelegramBot:
         keyboard = [
             [InlineKeyboardButton("🏪 Выбрать кафе", callback_data="show_cafes")],
             [InlineKeyboardButton("ℹ️ О сервисе", callback_data="about_service")],
-            [InlineKeyboardButton("🌐 Открыть веб-сайт", url="http://127.0.0.1:8000/")],
+            [InlineKeyboardButton("🌐 Открыть веб-сайт", url="https://coworking.greatideas.ru/")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -161,9 +168,13 @@ class TelegramBot:
     
     async def show_cafes(self, query):
         """Показать список кафе"""
-        cafes = Cafe.objects.filter(is_active=True).order_by('name')
+        @sync_to_async
+        def get_cafes():
+            return list(Cafe.objects.filter(is_active=True).order_by('name'))
         
-        if not cafes.exists():
+        cafes = await get_cafes()
+        
+        if not cafes:
             text = """
 😔 *Кафе временно недоступны*
 
@@ -176,7 +187,7 @@ class TelegramBot:
             ]
         else:
             text = f"""
-🏪 *Выберите кафе ({cafes.count()} доступно)*
+🏪 *Выберите кафе ({len(cafes)} доступно)*
 
 Каждое кафе имеет уникальное меню и атмосферу:
             """
@@ -202,8 +213,16 @@ class TelegramBot:
     
     async def show_cafe_details(self, query, cafe_id):
         """Показать детали кафе"""
-        try:
-            cafe = Cafe.objects.get(id=cafe_id, is_active=True)
+        @sync_to_async
+        def get_cafe():
+            try:
+                return Cafe.objects.get(id=cafe_id, is_active=True)
+            except Cafe.DoesNotExist:
+                return None
+        
+        cafe = await get_cafe()
+        
+        if cafe:
             
             text = f"""
 ☕ *{cafe.name}*
@@ -229,14 +248,14 @@ class TelegramBot:
             keyboard = [
                 [InlineKeyboardButton(
                     "🍽️ Открыть меню", 
-                    url=f"http://127.0.0.1:8000/cafe/{cafe.id}/"
+                    url=f"https://coworking.greatideas.ru/cafe/{cafe.id}/"
                 )],
                 [InlineKeyboardButton("🏪 Другие кафе", callback_data="show_cafes")],
                 [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")],
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
-        except Cafe.DoesNotExist:
+        else:
             text = "😔 Кафе не найдено или временно недоступно"
             keyboard = [
                 [InlineKeyboardButton("🏪 Выбрать другое", callback_data="show_cafes")],
