@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Заказ #{{ order.order_number }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <div class="border-b pb-4 mb-6">
+                <h1 class="text-3xl font-bold text-gray-900">Заказ #{{ order.order_number }}</h1>
+                <p class="text-gray-600 mt-2">{{ order.created_at|date:"d.m.Y H:i" }}</p>
+            </div>
+
+            <!-- Статус заказа -->
+            <div class="mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold">Статус заказа</h2>
+                    <span class="px-4 py-2 rounded-full text-sm font-medium
+                        {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                        {% elif order.status == 'confirmed' %}bg-blue-100 text-blue-800
+                        {% elif order.status == 'preparing' %}bg-orange-100 text-orange-800
+                        {% elif order.status == 'ready' %}bg-green-100 text-green-800
+                        {% elif order.status == 'delivered' %}bg-green-100 text-green-800
+                        {% elif order.status == 'cancelled' %}bg-red-100 text-red-800
+                        {% endif %}">
+                        {{ status_display }}
+                    </span>
+                </div>
+
+                <!-- Прогресс-бар -->
+                <div class="relative">
+                    <div class="overflow-x-auto">
+                        <div class="flex items-center min-w-max" id="progress-steps">
+                            <!-- Шаги будут загружены через JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Информация о кафе -->
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">Кафе</h3>
+                    <p class="text-gray-700">{{ order.cafe.name }}</p>
+                    <p class="text-gray-600 text-sm">{{ order.cafe.address }}</p>
+                </div>
+
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="font-semibold mb-2">Способ получения</h3>
+                    <p class="text-gray-700">{{ order.get_delivery_type_display }}</p>
+                    {% if order.delivered_at %}
+                        <p class="text-green-600 text-sm mt-1">
+                            {% if order.delivery_type == 'pickup' %}
+                                Выдан: {{ order.delivered_at|date:"d.m.Y H:i" }}
+                            {% else %}
+                                Доставлен: {{ order.delivered_at|date:"d.m.Y H:i" }}
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Детали заказа -->
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <h3 class="font-semibold mb-4">Состав заказа</h3>
+                <div class="space-y-3">
+                    {% for item in order.items.all %}
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <span class="font-medium">{{ item.product.name }}</span>
+                                <span class="text-gray-600 text-sm ml-2">× {{ item.quantity }}</span>
+                            </div>
+                            <span class="font-medium">{{ item.total_price }} ₽</span>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="border-t pt-3 mt-3">
+                    <div class="flex justify-between items-center font-bold text-lg">
+                        <span>Итого:</span>
+                        <span>{{ order.total_amount }} ₽</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопка обновления -->
+            <div class="text-center">
+                <button onclick="refreshStatus()" 
+                        class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    Обновить статус
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let orderNumber = '{{ order.order_number }}';
+
+function refreshStatus() {
+    fetch(`/orders/api/status/${orderNumber}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateProgressSteps(data.order.steps);
+                location.reload(); // Перезагружаем страницу для обновления статуса
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка при обновлении статуса:', error);
+        });
+}
+
+function updateProgressSteps(steps) {
+    const container = document.getElementById('progress-steps');
+    container.innerHTML = '';
+
+    steps.forEach((step, index) => {
+        const stepElement = document.createElement('div');
+        stepElement.className = 'flex items-center';
+        
+        // Иконка шага
+        const iconClass = step.completed ? 'bg-green-500 text-white' : 
+                         step.active ? 'bg-blue-500 text-white' : 'bg-gray-300 text-gray-600';
+        
+        stepElement.innerHTML = `
+            <div class="flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full flex items-center justify-center ${iconClass} text-sm font-bold">
+                    ${step.completed ? '✓' : index + 1}
+                </div>
+                <span class="text-xs mt-2 text-center max-w-20">${step.title}</span>
+            </div>
+        `;
+
+        container.appendChild(stepElement);
+
+        // Добавляем соединительную линию
+        if (index < steps.length - 1) {
+            const lineElement = document.createElement('div');
+            lineElement.className = `h-1 w-16 mx-2 ${step.completed ? 'bg-green-500' : 'bg-gray-300'}`;
+            container.appendChild(lineElement);
+        }
+    });
+}
+
+// Загружаем начальное состояние прогресса
+document.addEventListener('DOMContentLoaded', function() {
+    refreshStatus();
+});
+
+// Автообновление каждые 30 секунд
+setInterval(refreshStatus, 30000);
+</script>
+{% endblock %}

@@ -32,6 +32,7 @@ class TelegramBot:
         
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
+        self.application.add_handler(CommandHandler("orders", self.orders_command))
         self.application.add_handler(CallbackQueryHandler(self.button_callback))
         
         # Обработчики платежей
@@ -85,6 +86,7 @@ class TelegramBot:
         # Создаем клавиатуру с кнопками
         keyboard = [
             [InlineKeyboardButton("🏪 Выбрать кафе", callback_data="show_cafes")],
+            [InlineKeyboardButton("📋 Мои заказы", callback_data="my_orders")],
             [InlineKeyboardButton("ℹ️ О сервисе", callback_data="about_service")],
             [InlineKeyboardButton("🌐 Открыть веб-сайт", url="https://coworking.greatideas.ru/")],
         ]
@@ -104,6 +106,7 @@ class TelegramBot:
 *Доступные команды:*
 /start - Главное меню
 /help - Эта справка
+/orders - Мои заказы
 
 *Как сделать заказ:*
 1️⃣ Нажмите "Выбрать кафе"
@@ -132,6 +135,10 @@ class TelegramBot:
             reply_markup=reply_markup
         )
     
+    async def orders_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Обработчик команды /orders"""
+        await self.show_user_orders(update, context, is_message=True)
+    
     async def button_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик нажатий на inline кнопки"""
         query = update.callback_query
@@ -141,6 +148,8 @@ class TelegramBot:
             await self.show_main_menu(query)
         elif query.data == "show_cafes":
             await self.show_cafes(query)
+        elif query.data == "my_orders":
+            await self.show_user_orders(query, context=None, is_message=False)
         elif query.data == "about_service":
             await self.show_about_service(query)
         elif query.data.startswith("cafe_"):
@@ -313,6 +322,86 @@ class TelegramBot:
             parse_mode='Markdown',
             reply_markup=reply_markup
         )
+        
+    async def show_user_orders(self, update_or_query, context, is_message=False):
+        """Показать заказы пользователя"""
+        user = update_or_query.effective_user if is_message else update_or_query.from_user
+        
+        try:
+            # Получаем заказы пользователя
+            orders = await self._get_user_orders(user.id)
+            
+            if not orders:
+                text = """
+📋 *Мои заказы*
+
+У вас пока нет заказов.
+Выберите кафе и сделайте свой первый заказ! 🎉
+                """
+                
+                keyboard = [
+                    [InlineKeyboardButton("🏪 Выбрать кафе", callback_data="show_cafes")],
+                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")],
+                ]
+            else:
+                text = "📋 *Мои заказы*\n\n"
+                
+                # Показываем последние 5 заказов
+                for i, order in enumerate(orders[:5], 1):
+                    status_emoji = {
+                        'pending': '⏳',
+                        'confirmed': '✅',
+                        'preparing': '👨‍🍳',
+                        'ready': '🎯',
+                        'delivered': '✅',
+                        'cancelled': '❌'
+                    }.get(order['status'], '❓')
+                    
+                    text += f"{i}. *Заказ #{order['order_number']}*\n"
+                    text += f"   {status_emoji} {order['status_display']}\n"
+                    text += f"   🏪 {order['cafe_name']}\n"
+                    text += f"   💰 {order['total_amount']} ₽\n"
+                    text += f"   📅 {order['created_at']}\n\n"
+                
+                if len(orders) > 5:
+                    text += f"... и еще {len(orders) - 5} заказов\n\n"
+                
+                # Добавляем ссылку на полный список
+                orders_url = "https://coworking.greatideas.ru/orders/my-orders/"
+                text += f"👆 *[Посмотреть все заказы на сайте]({orders_url})*"
+                
+                keyboard = [
+                    [InlineKeyboardButton("🌐 Все заказы на сайте", url=orders_url)],
+                    [InlineKeyboardButton("🏪 Сделать новый заказ", callback_data="show_cafes")],
+                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")],
+                ]
+            
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if is_message:
+                await update_or_query.reply_text(
+                    text,
+                    parse_mode='Markdown',
+                    reply_markup=reply_markup
+                )
+            else:
+                await update_or_query.edit_message_text(
+                    text,
+                    parse_mode='Markdown',
+                    reply_markup=reply_markup
+                )
+                
+        except Exception as e:
+            logger.error(f"Ошибка при получении заказов пользователя: {e}")
+            error_text = "❌ Произошла ошибка при загрузке ваших заказов. Попробуйте позже."
+            
+            keyboard = [[InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
+            if is_message:
+                await update_or_query.reply_text(error_text, reply_markup=reply_markup)
+            else:
+                await update_or_query.edit_message_text(error_text, reply_markup=reply_markup)
     
     async def handle_pre_checkout_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик pre-checkout запросов (подтверждение платежа)"""
@@ -336,17 +425,143 @@ class TelegramBot:
             logger.info(f"Invoice payload: {payment.invoice_payload}")
             logger.info(f"Provider payment charge id: {payment.provider_payment_charge_id}")
             
-            # Отправляем подтверждение пользователю
-            await update.message.reply_text(
-                f"✅ *Платеж успешен!*\n"
-                f"Сумма: {payment.total_amount/100} {payment.currency}\n"
-                f"Спасибо за покупку! 🎉\n\n"
-                f"Ваш заказ передан в обработку.",
-                parse_mode='Markdown'
-            )
+            # Найти заказ по invoice_payload или provider_payment_charge_id
+            order = await self._find_order_by_payment(payment)
+            
+            if order:
+                # Обновить статус заказа
+                await self._update_order_status(order, 'confirmed')
+                
+                # Отправить уведомление персоналу
+                await self._notify_staff_about_order(order)
+                
+                # Очистить корзину пользователя
+                await self._clear_user_cart(user.id)
+                
+                # Отправляем подтверждение пользователю с номером заказа и ссылкой для отслеживания
+                tracking_url = f"https://coworking.greatideas.ru/orders/status/{order.order_number}/"
+                
+                keyboard = [
+                    [InlineKeyboardButton("🔍 Отследить заказ", url=tracking_url)]
+                ]
+                reply_markup = InlineKeyboardMarkup(keyboard)
+                
+                await update.message.reply_text(
+                    f"✅ *Платеж успешен!*\n"
+                    f"Номер заказа: *#{order.order_number}*\n"
+                    f"Сумма: {payment.total_amount/100} {payment.currency}\n"
+                    f"Спасибо за покупку! 🎉\n\n"
+                    f"📋 Ваш заказ передан в кафе и готовится.\n"
+                    f"🔔 Вы получите уведомление, когда заказ будет готов.\n\n"
+                    f"🏪 Кафе: {order.cafe.name}\n"
+                    f"📍 {order.cafe.address}\n\n"
+                    f"👆 *Нажмите кнопку выше для отслеживания заказа*",
+                    parse_mode='Markdown',
+                    reply_markup=reply_markup
+                )
+            else:
+                # Если заказ не найден
+                await update.message.reply_text(
+                    f"✅ *Платеж успешен!*\n"
+                    f"Сумма: {payment.total_amount/100} {payment.currency}\n"
+                    f"Спасибо за покупку! 🎉\n\n"
+                    f"Ваш заказ передан в обработку.",
+                    parse_mode='Markdown'
+                )
             
         except Exception as e:
             logger.error(f"Ошибка при обработке успешного платежа: {e}")
+    
+    @sync_to_async
+    def _find_order_by_payment(self, payment):
+        """Найти заказ по данным платежа"""
+        from payments.models import Payment as PaymentModel
+        
+        try:
+            # Сначала ищем по invoice_payload
+            if payment.invoice_payload:
+                payment_record = PaymentModel.objects.filter(
+                    invoice_payload=payment.invoice_payload
+                ).first()
+                if payment_record:
+                    return payment_record.order
+            
+            # Затем по provider_payment_charge_id
+            if payment.provider_payment_charge_id:
+                payment_record = PaymentModel.objects.filter(
+                    provider_payment_charge_id=payment.provider_payment_charge_id
+                ).first()
+                if payment_record:
+                    return payment_record.order
+            
+            return None
+        except Exception as e:
+            logger.error(f"Ошибка поиска заказа: {e}")
+            return None
+    
+    @sync_to_async
+    def _update_order_status(self, order, status):
+        """Обновить статус заказа"""
+        try:
+            order.status = status
+            order.save(update_fields=['status'])
+            logger.info(f"Статус заказа #{order.order_number} обновлен на '{status}'")
+        except Exception as e:
+            logger.error(f"Ошибка обновления статуса заказа: {e}")
+    
+    async def _notify_staff_about_order(self, order):
+        """Отправить уведомление персоналу о новом заказе"""
+        try:
+            from orders.staff_notifications import staff_notification_service
+            await staff_notification_service.send_new_order_notification(order)
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления персоналу: {e}")
+    
+    @sync_to_async
+    def _get_user_orders(self, telegram_user_id):
+        """Получить заказы пользователя"""
+        try:
+            from users.models import TelegramUser
+            from orders.models import Order
+            from django.utils import timezone
+            
+            telegram_user = TelegramUser.objects.filter(telegram_id=telegram_user_id).first()
+            if not telegram_user:
+                return []
+            
+            orders = Order.objects.filter(user=telegram_user).order_by('-created_at')
+            
+            orders_data = []
+            for order in orders:
+                orders_data.append({
+                    'order_number': order.order_number,
+                    'status': order.status,
+                    'status_display': order.get_status_display(),
+                    'cafe_name': order.cafe.name,
+                    'total_amount': float(order.total_amount),
+                    'created_at': order.created_at.strftime('%d.%m.%Y %H:%M'),
+                    'delivered_at': order.delivered_at.strftime('%d.%m.%Y %H:%M') if order.delivered_at else None,
+                })
+            
+            return orders_data
+            
+        except Exception as e:
+            logger.error(f"Ошибка получения заказов пользователя: {e}")
+            return []
+    
+    @sync_to_async
+    def _clear_user_cart(self, telegram_user_id):
+        """Очистить корзину пользователя"""
+        try:
+            from users.models import TelegramUser
+            
+            telegram_user = TelegramUser.objects.filter(telegram_id=telegram_user_id).first()
+            if telegram_user:
+                # Здесь можно добавить логику очистки корзины
+                # Например, если корзина хранится в сессии пользователя или в отдельной модели
+                logger.info(f"Корзина пользователя {telegram_user_id} очищена")
+        except Exception as e:
+            logger.error(f"Ошибка очистки корзины: {e}")
     
     def run_polling(self):
         """Запуск бота в режиме polling"""

@@ -190,6 +190,10 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
 TELEGRAM_BOT_USERNAME = os.getenv('TELEGRAM_BOT_USERNAME', '')
 TELEGRAM_WEBHOOK_URL = os.getenv('TELEGRAM_WEBHOOK_URL', '')
 
+# Staff Notification Bot Settings
+STAFF_BOT_TOKEN = os.getenv('STAFF_BOT_TOKEN', '8144320612:AAGjo3B_V8R2cNCM0Iktqd_Ow7qk2E2GJD8')
+STAFF_CHAT_ID = os.getenv('STAFF_CHAT_ID', '-1003165131771')  # ID чата/группы для уведомлений персонала
+
 # Payment Settings
 PAYMENT_PROVIDER_TOKEN = os.getenv('PAYMENT_PROVIDER_TOKEN', '')
 YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', '')

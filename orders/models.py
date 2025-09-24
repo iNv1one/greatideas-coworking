@@ -50,6 +50,10 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Обновлен")
     delivered_at = models.DateTimeField(null=True, blank=True, verbose_name="Доставлен")
     
+    # Уведомления персонала
+    staff_notification_sent = models.BooleanField(default=False, verbose_name="Уведомление персонала отправлено")
+    staff_message_id = models.IntegerField(null=True, blank=True, verbose_name="ID сообщения в чате персонала")
+    
     class Meta:
         verbose_name = "Заказ"
         verbose_name_plural = "Заказы"

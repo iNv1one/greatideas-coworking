@@ -1,0 +1,16 @@
+[Unit]
+Description=GreatIdeas Staff Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/home/www-data/greatideas
+Environment="PATH=/home/www-data/greatideas/venv/bin"
+ExecStart=/home/www-data/greatideas/venv/bin/python manage.py run_staff_bot
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

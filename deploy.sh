@@ -41,5 +41,26 @@ sudo -u greatideas bash -c "source venv/bin/activate && python manage.py migrate
 # Собираем статические файлы
 sudo -u greatideas bash -c "source venv/bin/activate && python manage.py collectstatic --noinput"
 
+# Настраиваем systemd сервисы для ботов
+echo "🤖 Настраиваем Telegram ботов..."
+
+# Копируем сервисы
+sudo cp telegram-bot.service /etc/systemd/system/
+sudo cp staff-bot.service /etc/systemd/system/
+sudo cp gunicorn.service /etc/systemd/system/
+sudo cp gunicorn.socket /etc/systemd/system/
+
+# Перезагружаем systemd
+sudo systemctl daemon-reload
+
+# Включаем сервисы
+sudo systemctl enable gunicorn.socket
+sudo systemctl enable telegram-bot.service
+sudo systemctl enable staff-bot.service
+
 echo "✅ Основная настройка завершена!"
-echo "🔧 Теперь настройте Nginx и Gunicorn согласно инструкции"
+echo "🔧 Теперь настройте переменные окружения в .env"
+echo "🤖 Запустите ботов командами:"
+echo "   sudo systemctl start telegram-bot"
+echo "   sudo systemctl start staff-bot"
+echo "🌐 Настройте Nginx и запустите веб-сервер"
