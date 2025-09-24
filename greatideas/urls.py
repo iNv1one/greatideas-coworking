@@ -24,6 +24,7 @@ urlpatterns = [
     path('', include('cafes.urls')),
     path('users/', include('users.urls')),
     path('api/orders/', include('orders.api_urls')),
+    path('payments/', include('payments.urls')),
 ]
 
 # Для обслуживания медиа файлов в режиме разработки
