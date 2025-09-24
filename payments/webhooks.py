@@ -159,3 +159,7 @@ class YookassaWebhookView(View):
         logger.info(f"Платеж ожидает подтверждения для заказа #{payment.order.order_number}")
         
         payment.status = 'processing'
+
+
+# Создаем экземпляр view для использования в urls.py
+yookassa_webhook = YookassaWebhookView.as_view()
