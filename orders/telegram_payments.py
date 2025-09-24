@@ -179,13 +179,18 @@ class TelegramPaymentService:
                 menu_item=item_data['menu_item'],
                 variant=item_data['variant'],
                 quantity=item_data['quantity'],
-                unit_price=item_data['unit_price'],
+                base_price=item_data['menu_item'].price,
+                final_price=item_data['unit_price'],
                 total_price=item_data['total_price'],
             )
             
-            # Добавляем добавки
+            # Добавляем добавки через промежуточную модель
             for addon in item_data['addons']:
-                order_item.addons.add(addon)
+                from orders.models import OrderItemAddon
+                OrderItemAddon.objects.create(
+                    order_item=order_item,
+                    addon=addon
+                )
         
         return order
     
@@ -211,7 +216,7 @@ class TelegramPaymentService:
             if order_item.variant:
                 name += f" ({order_item.variant.name})"
             
-            price_kopecks = int(order_item.unit_price * 100)  # Переводим в копейки
+            price_kopecks = int(order_item.final_price * 100)  # Переводим в копейки
             
             prices.append(LabeledPrice(
                 label=f"{name} x{order_item.quantity}",
