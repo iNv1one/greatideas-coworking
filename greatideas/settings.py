@@ -192,6 +192,8 @@ TELEGRAM_WEBHOOK_URL = os.getenv('TELEGRAM_WEBHOOK_URL', '')
 
 # Payment Settings
 PAYMENT_PROVIDER_TOKEN = os.getenv('PAYMENT_PROVIDER_TOKEN', '')
+YOOKASSA_SECRET_KEY = os.getenv('YOOKASSA_SECRET_KEY', '')
+YOOKASSA_SHOP_ID = os.getenv('YOOKASSA_SHOP_ID', '1164804')  # Правильный Shop ID
 
 # Celery Configuration (for async tasks)
 CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')

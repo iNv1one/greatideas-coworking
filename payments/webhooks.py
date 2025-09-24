@@ -5,10 +5,11 @@ import json
 import logging
 from django.http import HttpResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
 from django.utils.decorators import method_decorator
 from django.views import View
+from django.utils import timezone
 from payments.models import Payment
+from payments.yookassa_service import YooKassaService
 
 logger = logging.getLogger(__name__)
 
@@ -21,139 +22,140 @@ class YookassaWebhookView(View):
         """Обрабатывает уведомления от ЮKassa"""
         try:
             # Получаем данные из запроса
-            data = json.loads(request.body)
+            raw_data = request.body.decode('utf-8')
+            data = json.loads(raw_data)
+            
             logger.info(f"Получен webhook от ЮKassa: {data}")
             
-            # Извлекаем информацию о событии
-            event_type = data.get('event')
-            payment_object = data.get('object', {})
-            payment_id = payment_object.get('id')
-            status = payment_object.get('status')
+            # Инициализируем сервис ЮKassa
+            yookassa_service = YooKassaService()
+            
+            # Обрабатываем данные webhook'а
+            processed_data = yookassa_service.process_webhook_data(data)
+            
+            if not processed_data:
+                logger.error("Не удалось обработать данные webhook'а")
+                return HttpResponseBadRequest("Invalid webhook data")
+            
+            # Извлекаем данные
+            event_type = processed_data['event_type']
+            payment_id = processed_data['payment_id']
+            status = processed_data['status']
             
             logger.info(f"Событие: {event_type}, Платеж: {payment_id}, Статус: {status}")
             
-            if not payment_id:
-                logger.error("Отсутствует ID платежа в webhook")
-                return HttpResponseBadRequest("Missing payment ID")
-            
             # Ищем платеж в нашей базе данных
-            try:
-                # Ищем по external_payment_id или provider_payment_charge_id
-                payment = Payment.objects.filter(
-                    external_payment_id=payment_id
-                ).first()
-                
-                if not payment:
-                    # Если не найден, попробуем по другим полям
-                    payment = Payment.objects.filter(
-                        provider_payment_charge_id=payment_id
-                    ).first()
-                
-                if not payment:
-                    logger.warning(f"Платеж {payment_id} не найден в базе данных")
-                    return HttpResponse("Payment not found", status=404)
-                    
-            except Exception as e:
-                logger.error(f"Ошибка поиска платежа {payment_id}: {e}")
-                return HttpResponseBadRequest("Database error")
+            payment = self._find_payment(payment_id, processed_data)
             
-            # Обрабатываем разные типы событий
-            if event_type == 'payment.succeeded':
-                logger.info(f"Платеж {payment_id} успешно оплачен")
-                self._handle_payment_succeeded(payment, payment_object)
-                
-            elif event_type == 'payment.canceled':
-                logger.info(f"Платеж {payment_id} отменен")
-                self._handle_payment_canceled(payment, payment_object)
-                
-            elif event_type == 'payment.waiting_for_capture':
-                logger.info(f"Платеж {payment_id} ожидает подтверждения")
-                self._handle_payment_waiting_for_capture(payment, payment_object)
-                
-            elif event_type == 'refund.succeeded':
-                logger.info(f"Возврат по платежу {payment_id} успешно выполнен")
-                self._handle_refund_succeeded(payment, payment_object)
-                
-            else:
-                logger.warning(f"Неизвестный тип события: {event_type}")
+            if not payment:
+                logger.warning(f"Платеж с ID {payment_id} не найден в базе данных")
+                # Возвращаем 200, чтобы ЮKassa не повторяла запрос
+                return HttpResponse("Payment not found", status=200)
             
+            # Обрабатываем событие
+            self._handle_webhook_event(payment, processed_data)
+            
+            logger.info(f"Webhook успешно обработан для платежа {payment_id}")
             return HttpResponse("OK")
             
-        except json.JSONDecodeError:
-            logger.error("Неверный JSON в webhook запросе")
+        except json.JSONDecodeError as e:
+            logger.error(f"Ошибка парсинга JSON: {e}")
             return HttpResponseBadRequest("Invalid JSON")
-            
         except Exception as e:
-            logger.error(f"Ошибка обработки webhook: {e}")
-            return HttpResponseBadRequest("Internal error")
+            logger.error(f"Ошибка обработки webhook'а: {e}")
+            return HttpResponse("Internal Server Error", status=500)
     
-    def _handle_payment_succeeded(self, payment: Payment, payment_data: dict):
-        """Обрабатывает успешный платеж"""
-        try:
-            # Обновляем статус платежа
-            payment.status = 'completed'
-            payment.external_payment_id = payment_data.get('id')
-            payment.provider_payment_charge_id = payment_data.get('id')
-            
-            # Сохраняем дополнительные данные
-            if 'paid_at' in payment_data:
-                from django.utils.dateparse import parse_datetime
-                payment.paid_at = parse_datetime(payment_data['paid_at'])
-            
-            payment.save()
-            
-            # Обновляем статус заказа
-            order = payment.order
-            if order.status == 'pending':
-                order.status = 'confirmed'
-                order.save()
-                logger.info(f"Заказ {order.order_number} подтвержден")
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки успешного платежа: {e}")
+    def _find_payment(self, payment_id: str, processed_data: dict):
+        """Найти платеж в базе данных"""
+        # Сначала ищем по external_payment_id
+        payment = Payment.objects.filter(external_payment_id=payment_id).first()
+        
+        if payment:
+            return payment
+        
+        # Если не найден, ищем по provider_payment_charge_id
+        payment = Payment.objects.filter(provider_payment_charge_id=payment_id).first()
+        
+        if payment:
+            return payment
+        
+        # Если не найден, ищем по metadata (может содержать invoice_payload)
+        metadata = processed_data.get('metadata', {})
+        invoice_payload = metadata.get('invoice_payload')
+        
+        if invoice_payload:
+            payment = Payment.objects.filter(invoice_payload=invoice_payload).first()
+            if payment:
+                # Сохраняем payment_id для будущих webhook'ов
+                payment.external_payment_id = payment_id
+                payment.save(update_fields=['external_payment_id'])
+                return payment
+        
+        return None
     
-    def _handle_payment_canceled(self, payment: Payment, payment_data: dict):
-        """Обрабатывает отмененный платеж"""
-        try:
-            payment.status = 'failed'
-            payment.save()
+    def _handle_webhook_event(self, payment, processed_data: dict):
+        """Обработать событие webhook'а"""
+        event_type = processed_data['event_type']
+        status = processed_data['status']
+        
+        logger.info(f"Обработка события {event_type} для заказа #{payment.order.order_number}")
+        
+        # Обновляем external_payment_id если его не было
+        if not payment.external_payment_id:
+            payment.external_payment_id = processed_data['payment_id']
+        
+        if event_type == 'payment.succeeded' and status == 'succeeded':
+            # Платеж успешно завершен
+            self._handle_successful_payment(payment, processed_data)
             
-            # Можно также обновить статус заказа
-            order = payment.order
-            if order.status == 'pending':
-                order.status = 'cancelled'
-                order.save()
-                logger.info(f"Заказ {order.order_number} отменен")
-                
-        except Exception as e:
-            logger.error(f"Ошибка обработки отмененного платежа: {e}")
+        elif event_type == 'payment.canceled' or status == 'canceled':
+            # Платеж отменен
+            self._handle_canceled_payment(payment, processed_data)
+            
+        elif event_type == 'payment.waiting_for_capture':
+            # Платеж ожидает подтверждения
+            self._handle_waiting_payment(payment, processed_data)
+            
+        else:
+            logger.info(f"Событие {event_type} ({status}) не требует обработки")
+        
+        # Сохраняем изменения
+        payment.save()
     
-    def _handle_payment_waiting_for_capture(self, payment: Payment, payment_data: dict):
-        """Обрабатывает платеж, ожидающий подтверждения"""
-        try:
-            payment.status = 'processing'
-            payment.external_payment_id = payment_data.get('id')
-            payment.save()
-            logger.info(f"Платеж {payment.id} ожидает подтверждения")
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки платежа в ожидании: {e}")
+    def _handle_successful_payment(self, payment, processed_data: dict):
+        """Обработать успешный платеж"""
+        logger.info(f"Платеж успешно завершен для заказа #{payment.order.order_number}")
+        
+        payment.status = 'completed'
+        payment.paid_at = timezone.now()
+        
+        # Сохраняем данные о платеже
+        if processed_data.get('captured_at'):
+            try:
+                payment.paid_at = timezone.fromisoformat(
+                    processed_data['captured_at'].replace('Z', '+00:00')
+                )
+            except ValueError:
+                pass  # Используем текущее время если не удалось распарсить
+        
+        # Обновляем заказ
+        payment.order.status = 'confirmed'
+        payment.order.save(update_fields=['status'])
+        
+        logger.info(f"Заказ #{payment.order.order_number} помечен как оплаченный")
     
-    def _handle_refund_succeeded(self, payment: Payment, payment_data: dict):
-        """Обрабатывает успешный возврат"""
-        try:
-            payment.status = 'refunded'
-            payment.save()
-            logger.info(f"Возврат по платежу {payment.id} выполнен")
-            
-        except Exception as e:
-            logger.error(f"Ошибка обработки возврата: {e}")
-
-
-# Функция-обертка для использования без класса
-@csrf_exempt
-@require_http_methods(["POST"])
-def yookassa_webhook(request):
-    """Простая функция-обработчик webhook'а"""
-    view = YookassaWebhookView()
-    return view.post(request)
+    def _handle_canceled_payment(self, payment, processed_data: dict):
+        """Обработать отмененный платеж"""
+        logger.info(f"Платеж отменен для заказа #{payment.order.order_number}")
+        
+        payment.status = 'cancelled'
+        
+        # Обновляем заказ
+        payment.order.status = 'cancelled'
+        payment.order.save(update_fields=['status'])
+    
+    def _handle_waiting_payment(self, payment, processed_data: dict):
+        """Обработать платеж, ожидающий подтверждения"""
+        logger.info(f"Платеж ожидает подтверждения для заказа #{payment.order.order_number}")
+        
+        payment.status = 'processing'
