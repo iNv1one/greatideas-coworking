@@ -28,9 +28,15 @@ class TelegramBot:
     
     def setup_handlers(self):
         """Настройка обработчиков команд и сообщений"""
+        from telegram.ext import PreCheckoutQueryHandler, MessageHandler, filters
+        
         self.application.add_handler(CommandHandler("start", self.start_command))
         self.application.add_handler(CommandHandler("help", self.help_command))
         self.application.add_handler(CallbackQueryHandler(self.button_callback))
+        
+        # Обработчики платежей
+        self.application.add_handler(PreCheckoutQueryHandler(self.handle_pre_checkout_query))
+        self.application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, self.handle_successful_payment))
     
     async def start_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик команды /start"""
@@ -307,6 +313,40 @@ class TelegramBot:
             parse_mode='Markdown',
             reply_markup=reply_markup
         )
+    
+    async def handle_pre_checkout_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Обработчик pre-checkout запросов (подтверждение платежа)"""
+        query = update.pre_checkout_query
+        
+        try:
+            # Подтверждаем платеж
+            await query.answer(ok=True)
+            logger.info(f"Pre-checkout подтвержден для пользователя {query.from_user.id}")
+        except Exception as e:
+            logger.error(f"Ошибка при обработке pre-checkout: {e}")
+            await query.answer(ok=False, error_message="Произошла ошибка при обработке платежа")
+    
+    async def handle_successful_payment(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Обработчик успешных платежей"""
+        payment = update.message.successful_payment
+        user = update.effective_user
+        
+        try:
+            logger.info(f"Успешный платеж от пользователя {user.id}: {payment.total_amount/100} {payment.currency}")
+            logger.info(f"Invoice payload: {payment.invoice_payload}")
+            logger.info(f"Provider payment charge id: {payment.provider_payment_charge_id}")
+            
+            # Отправляем подтверждение пользователю
+            await update.message.reply_text(
+                f"✅ *Платеж успешен!*\n"
+                f"Сумма: {payment.total_amount/100} {payment.currency}\n"
+                f"Спасибо за покупку! 🎉\n\n"
+                f"Ваш заказ передан в обработку.",
+                parse_mode='Markdown'
+            )
+            
+        except Exception as e:
+            logger.error(f"Ошибка при обработке успешного платежа: {e}")
     
     def run_polling(self):
         """Запуск бота в режиме polling"""
