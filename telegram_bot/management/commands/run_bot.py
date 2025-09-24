@@ -322,30 +322,8 @@ class Command(BaseCommand):
             self.stdout.write("Запуск Telegram Bot...")
             bot = TelegramBot()
             
-            # Проверяем, есть ли уже запущенный event loop
-            try:
-                loop = asyncio.get_running_loop()
-                # Если loop уже запущен, создаем задачу
-                import threading
-                def run_bot():
-                    new_loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(new_loop)
-                    new_loop.run_until_complete(bot.run_polling())
-                    new_loop.close()
-                
-                thread = threading.Thread(target=run_bot)
-                thread.daemon = True
-                thread.start()
-                thread.join()
-                
-            except RuntimeError:
-                # Нет запущенного loop, создаем новый
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    loop.run_until_complete(bot.run_polling())
-                finally:
-                    loop.close()
+            # Простой запуск без проверки event loop
+            asyncio.run(bot.run_polling())
                 
         except KeyboardInterrupt:
             self.stdout.write(
