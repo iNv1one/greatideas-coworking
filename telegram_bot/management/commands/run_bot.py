@@ -308,10 +308,11 @@ class TelegramBot:
             reply_markup=reply_markup
         )
     
-    async def run_polling(self):
+    def run_polling(self):
         """Запуск бота в режиме polling"""
         logger.info("Запуск Telegram Bot в режиме polling...")
-        await self.application.run_polling(drop_pending_updates=True)
+        # Используем синхронный метод run_polling, который сам управляет event loop
+        self.application.run_polling(drop_pending_updates=True)
 
 
 class Command(BaseCommand):
@@ -322,8 +323,8 @@ class Command(BaseCommand):
             self.stdout.write("Запуск Telegram Bot...")
             bot = TelegramBot()
             
-            # Простой запуск без проверки event loop
-            asyncio.run(bot.run_polling())
+            # Запуск через синхронный метод
+            bot.run_polling()
                 
         except KeyboardInterrupt:
             self.stdout.write(
