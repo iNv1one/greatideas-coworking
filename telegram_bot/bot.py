@@ -358,7 +358,7 @@ class TelegramBot:
                 provider_token=settings.PAYMENT_PROVIDER_TOKEN,
                 currency=payment.currency,
                 prices=prices,
-                photo_url=order.cafe.image.url if order.cafe.image else None,
+                photo_url=order.cafe.logo.url if order.cafe.logo else None,
                 need_name=True,
                 need_phone_number=True,
                 need_email=False,

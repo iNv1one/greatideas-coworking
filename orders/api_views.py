@@ -120,7 +120,7 @@ def create_payment(request):
             description=description,
             payload=payment.invoice_payload,
             prices=prices,
-            photo_url=order.cafe.image.url if order.cafe.image else None,
+            photo_url=order.cafe.logo.url if order.cafe.logo else None,
             need_shipping=order.delivery_type == 'delivery',
         )
         
