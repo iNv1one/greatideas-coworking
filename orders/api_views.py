@@ -10,6 +10,7 @@ from django.views.decorators.http import require_http_methods
 from django.conf import settings
 from telegram import Bot
 from users.models import TelegramUser
+from orders.models import Order
 from orders.telegram_payments import TelegramPaymentService
 
 logger = logging.getLogger(__name__)
@@ -89,6 +90,22 @@ def create_payment(request):
                 'success': False,
                 'error': 'Пользователь не найден'
             }, status=404)
+        
+        # Проверяем, есть ли активные заказы у пользователя (за последние 5 минут)
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        recent_orders = Order.objects.filter(
+            user=telegram_user,
+            status__in=['pending', 'confirmed'],
+            created_at__gte=timezone.now() - timedelta(minutes=5)
+        ).exists()
+        
+        if recent_orders:
+            return JsonResponse({
+                'success': False,
+                'error': 'У вас уже есть активный заказ. Подождите несколько минут перед созданием нового.'
+            }, status=400)
         
         # Создаем сервис платежей
         payment_service = TelegramPaymentService()

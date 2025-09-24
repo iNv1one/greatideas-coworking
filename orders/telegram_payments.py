@@ -179,6 +179,15 @@ class TelegramPaymentService:
     
     def create_payment(self, order: Order) -> Payment:
         """Создает запись о платеже"""
+        # Проверяем, есть ли уже платеж для этого заказа
+        existing_payment = Payment.objects.filter(order=order).first()
+        if existing_payment:
+            print(f"DEBUG: Найден существующий платеж для заказа {order.order_number}")
+            return existing_payment
+        
+        # Создаем уникальный invoice_payload на основе номера заказа
+        invoice_payload = f"order_{order.order_number}_{uuid.uuid4().hex[:8]}"
+        
         payment = Payment.objects.create(
             order=order,
             amount=order.total_amount,
@@ -186,8 +195,9 @@ class TelegramPaymentService:
             status='pending',
             currency='RUB',
             description=f"Оплата заказа #{order.order_number}",
-            invoice_payload=str(uuid.uuid4()),
+            invoice_payload=invoice_payload,
         )
+        print(f"DEBUG: Создан новый платеж для заказа {order.order_number} с payload {invoice_payload}")
         return payment
     
     def create_invoice_prices(self, order: Order) -> list:
