@@ -57,8 +57,12 @@ class TelegramPaymentService:
             # Старый формат: {item_id: quantity}
             first_item_id = next(iter(cart_data.keys()))
         elif isinstance(first_item_data, dict) and 'item_id' in first_item_data:
-            # Новый формат: {key: {item_id: ..., quantity: ...}}
+            # Формат: {key: {item_id: ..., quantity: ...}}
             first_item_id = first_item_data['item_id']
+        elif isinstance(first_item_data, dict) and 'quantity' in first_item_data:
+            # Формат: {item_id: {quantity: ...}} - item_id в ключе
+            first_item_id = next(iter(cart_data.keys()))
+            print(f"DEBUG: Используем item_id из ключа: {first_item_id}")
         else:
             print(f"ERROR: Неизвестный формат данных корзины: {type(first_item_data)}, {first_item_data}")
             raise ValueError(f"Неизвестный формат данных корзины: {first_item_data}")
@@ -77,17 +81,27 @@ class TelegramPaymentService:
             try:
                 # Получаем данные товара
                 if isinstance(cart_item_data, int):
-                    # Старый формат корзины
+                    # Старый формат корзины: {item_id: quantity}
                     item_id = cart_key
                     quantity = cart_item_data
                     variant_id = None
                     addon_ids = []
-                else:
-                    # Новый формат корзины
+                elif isinstance(cart_item_data, dict) and 'item_id' in cart_item_data:
+                    # Формат: {key: {item_id: ..., quantity: ...}}
                     item_id = cart_item_data['item_id']
                     quantity = cart_item_data['quantity']
                     variant_id = cart_item_data.get('variant_id')
                     addon_ids = cart_item_data.get('addon_ids', [])
+                elif isinstance(cart_item_data, dict) and 'quantity' in cart_item_data:
+                    # Формат: {item_id: {quantity: ...}} - item_id в ключе
+                    item_id = cart_key
+                    quantity = cart_item_data['quantity']
+                    variant_id = cart_item_data.get('variant_id')
+                    addon_ids = cart_item_data.get('addon_ids', [])
+                    print(f"DEBUG: Обрабатываем товар {item_id} с количеством {quantity}")
+                else:
+                    print(f"ERROR: Неизвестный формат элемента корзины: {cart_key} = {cart_item_data}")
+                    continue
                 
                 menu_item = MenuItem.objects.get(id=item_id)
                 
