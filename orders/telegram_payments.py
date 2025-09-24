@@ -61,8 +61,16 @@ class TelegramPaymentService:
             first_item_id = first_item_data['item_id']
         elif isinstance(first_item_data, dict) and 'quantity' in first_item_data:
             # Формат: {item_id: {quantity: ...}} - item_id в ключе
-            first_item_id = next(iter(cart_data.keys()))
-            print(f"DEBUG: Используем item_id из ключа: {first_item_id}")
+            first_cart_key = next(iter(cart_data.keys()))
+            print(f"DEBUG: Используем item_id из ключа: {first_cart_key}")
+            
+            # Парсим формат "1_v1" или просто "1"
+            if '_v' in str(first_cart_key):
+                # Формат "item_id_variant_id"
+                first_item_id = str(first_cart_key).split('_v')[0]
+                print(f"DEBUG: Извлечен item_id из '{first_cart_key}': {first_item_id}")
+            else:
+                first_item_id = first_cart_key
         else:
             print(f"ERROR: Неизвестный формат данных корзины: {type(first_item_data)}, {first_item_data}")
             raise ValueError(f"Неизвестный формат данных корзины: {first_item_data}")
@@ -94,9 +102,18 @@ class TelegramPaymentService:
                     addon_ids = cart_item_data.get('addon_ids', [])
                 elif isinstance(cart_item_data, dict) and 'quantity' in cart_item_data:
                     # Формат: {item_id: {quantity: ...}} - item_id в ключе
-                    item_id = cart_key
+                    # Парсим формат "1_v1" или просто "1"
+                    if '_v' in str(cart_key):
+                        # Формат "item_id_variant_id"
+                        parts = str(cart_key).split('_v')
+                        item_id = parts[0]
+                        variant_id = parts[1] if len(parts) > 1 else None
+                        print(f"DEBUG: Парсинг {cart_key}: item_id={item_id}, variant_id={variant_id}")
+                    else:
+                        item_id = cart_key
+                        variant_id = cart_item_data.get('variant_id')
+                    
                     quantity = cart_item_data['quantity']
-                    variant_id = cart_item_data.get('variant_id')
                     addon_ids = cart_item_data.get('addon_ids', [])
                     print(f"DEBUG: Обрабатываем товар {item_id} с количеством {quantity}")
                 else:
