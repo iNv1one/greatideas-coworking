@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.utils import timezone
+from django.conf import settings
 from payments.models import Payment
 from payments.yookassa_service import YooKassaService
 
@@ -142,6 +143,12 @@ class YookassaWebhookView(View):
         payment.order.status = 'confirmed'
         payment.order.save(update_fields=['status'])
         
+        # Отправляем уведомление пользователю в Telegram
+        self._send_payment_notification_to_user(payment.order)
+        
+        # Отправляем уведомление персоналу
+        self._notify_staff_about_order(payment.order)
+        
         logger.info(f"Заказ #{payment.order.order_number} помечен как оплаченный")
     
     def _handle_canceled_payment(self, payment, processed_data: dict):
@@ -159,6 +166,59 @@ class YookassaWebhookView(View):
         logger.info(f"Платеж ожидает подтверждения для заказа #{payment.order.order_number}")
         
         payment.status = 'processing'
+    
+    def _send_payment_notification_to_user(self, order):
+        """Отправить уведомление пользователю в Telegram о успешной оплате"""
+        try:
+            # Проверяем, что у пользователя есть telegram_id
+            if order.user.telegram_id and order.user.telegram_id != 0:
+                import requests
+                
+                # Используем основной бот для отправки уведомления пользователю
+                bot_token = settings.TELEGRAM_BOT_TOKEN
+                
+                message = (
+                    f"✅ *Платеж успешен!*\n"
+                    f"Номер заказа: *#{order.order_number}*\n"
+                    f"Сумма: {order.total_amount} ₽\n"
+                    f"Спасибо за покупку! 🎉\n\n"
+                    f"📋 Ваш заказ передан в кафе и готовится.\n"
+                    f"🔔 Вы получите уведомление, когда заказ будет готов.\n\n"
+                    f"🏪 Кафе: {order.cafe.name}\n"
+                    f"📍 {order.cafe.address}\n\n"
+                    f"👆 *Посмотреть ваш заказ вы можете в приложении*"
+                )
+                
+                # Отправляем сообщение через HTTP API
+                url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+                payload = {
+                    'chat_id': order.user.telegram_id,
+                    'text': message,
+                    'parse_mode': 'Markdown'
+                }
+                
+                response = requests.post(url, json=payload, timeout=30)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    if result.get('ok'):
+                        logger.info(f"Уведомление о платеже отправлено пользователю {order.user.telegram_id}")
+                    else:
+                        logger.error(f"Telegram API ошибка: {result.get('description', 'Unknown error')}")
+                else:
+                    logger.error(f"HTTP ошибка при отправке уведомления: {response.status_code}")
+                    
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления пользователю: {e}")
+    
+    def _notify_staff_about_order(self, order):
+        """Отправить уведомление персоналу о новом заказе"""
+        try:
+            from orders.staff_notifications import staff_notification_service
+            staff_notification_service.send_new_order_notification_sync(order)
+            logger.info(f"Уведомление персонала отправлено для заказа #{order.order_number}")
+        except Exception as e:
+            logger.error(f"Ошибка отправки уведомления персоналу: {e}")
 
 
 # Создаем экземпляр view для использования в urls.py

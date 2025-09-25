@@ -29,10 +29,8 @@ def profile(request):
         
         # Пытаемся найти связанного TelegramUser
         try:
-            # Если у пользователя есть связанный TelegramUser
-            telegram_user = TelegramUser.objects.filter(
-                username=request.user.username
-            ).first()
+            # Ищем TelegramUser по связанному Django пользователю
+            telegram_user = TelegramUser.objects.filter(user=request.user).first()
             
             if telegram_user:
                 orders = Order.objects.filter(user=telegram_user).order_by('-created_at')[:10]
