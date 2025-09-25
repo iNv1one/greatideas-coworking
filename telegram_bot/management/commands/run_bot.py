@@ -1,7 +1,7 @@
 import os
 import logging
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebApp
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -31,11 +31,8 @@ class TelegramBot:
         from telegram.ext import PreCheckoutQueryHandler, MessageHandler, filters
         
         self.application.add_handler(CommandHandler("start", self.start_command))
-        self.application.add_handler(CommandHandler("help", self.help_command))
-        self.application.add_handler(CommandHandler("orders", self.orders_command))
-        self.application.add_handler(CallbackQueryHandler(self.button_callback))
         
-        # Обработчики платежей
+        # Обработчики платежей (оставляем для работы мини-приложения)
         self.application.add_handler(PreCheckoutQueryHandler(self.handle_pre_checkout_query))
         self.application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, self.handle_successful_payment))
     
@@ -68,27 +65,16 @@ class TelegramBot:
         telegram_user, created = await save_telegram_user()
         
         welcome_text = f"""
-🎉 *Добро пожаловать в GreatIdeas!*
+🎉 *Добро пожаловать в GreatIdeas Coworking!*
 
 Привет, {user.first_name}! 👋
 
-*GreatIdeas* — это сеть уютных кафе с отличной едой и атмосферой. Мы объединили лучшие заведения города под одной крышей!
-
-🏪 *Что мы предлагаем:*
-• Несколько уникальных кафе
-• Разнообразное меню в каждом заведении  
-• Удобный заказ через бот
-• Быстрая доставка или самовывоз
-
-Выберите действие:
+Для заказа напитков и еды используйте наше веб-приложение:
         """
         
-        # Создаем клавиатуру с кнопками
+        # Создаем кнопку для запуска мини-приложения
         keyboard = [
-            [InlineKeyboardButton("🏪 Выбрать кафе", callback_data="show_cafes")],
-            [InlineKeyboardButton("📋 Мои заказы", callback_data="my_orders")],
-            [InlineKeyboardButton("ℹ️ О сервисе", callback_data="about_service")],
-            [InlineKeyboardButton("🌐 Открыть веб-сайт", url="https://coworking.greatideas.ru/")],
+            [InlineKeyboardButton("🚀 Открыть меню", web_app=WebApp(url="https://coworking.greatideas.ru/"))],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
@@ -555,12 +541,15 @@ class TelegramBot:
         """Очистить корзину пользователя"""
         try:
             from users.models import TelegramUser
-            
+            from orders.models import Order
             telegram_user = TelegramUser.objects.filter(telegram_id=telegram_user_id).first()
             if telegram_user:
-                # Здесь можно добавить логику очистки корзины
-                # Например, если корзина хранится в сессии пользователя или в отдельной модели
-                logger.info(f"Корзина пользователя {telegram_user_id} очищена")
+                # Удаляем все заказы пользователя со статусом 'pending' (корзина)
+                pending_orders = Order.objects.filter(user=telegram_user, status='pending')
+                count = pending_orders.count()
+                for order in pending_orders:
+                    order.delete()
+                logger.info(f"Удалено {count} заказов-корзин пользователя {telegram_user_id}")
         except Exception as e:
             logger.error(f"Ошибка очистки корзины: {e}")
     
