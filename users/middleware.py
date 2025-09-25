@@ -19,8 +19,13 @@ class TelegramWebAppAuthMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Проверяем авторизацию только если пользователь не авторизован
-        if not request.user.is_authenticated:
+        # Проверяем авторизацию только для GET запросов и только если пользователь не авторизован
+        # Исключаем AJAX запросы, которые могут мешать работе корзины
+        if (not request.user.is_authenticated and 
+            request.method == 'GET' and 
+            not request.headers.get('X-Requested-With') == 'XMLHttpRequest' and
+            not request.path.startswith('/admin/') and
+            not request.path.startswith('/api/')):
             self._try_telegram_auth(request)
         
         response = self.get_response(request)
