@@ -27,6 +27,22 @@ class StaffNotificationService:
         
         self.bot = Bot(token=self.bot_token)
     
+    def send_new_order_notification_sync(self, order) -> Optional[int]:
+        """Синхронная отправка уведомления о новом заказе"""
+        import asyncio
+        
+        try:
+            # Создаем новый event loop для синхронного вызова
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                return loop.run_until_complete(self.send_new_order_notification(order))
+            finally:
+                loop.close()
+        except Exception as e:
+            logger.error(f"Ошибка при синхронной отправке уведомления: {e}")
+            return None
+    
     async def send_new_order_notification(self, order) -> Optional[int]:
         """
         Отправить уведомление о новом заказе персоналу
@@ -81,7 +97,7 @@ class StaffNotificationService:
         items = await sync_to_async(lambda: list(order.items.all()))()
         
         for order_item in items:
-            item_text = f"• {order_item.item.name}"
+            item_text = f"• {order_item.product.name}"
             
             if order_item.variant:
                 item_text += f" ({order_item.variant.name})"
