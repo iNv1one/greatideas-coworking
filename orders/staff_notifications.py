@@ -29,19 +29,34 @@ class StaffNotificationService:
     
     def send_new_order_notification_sync(self, order) -> Optional[int]:
         """Синхронная отправка уведомления о новом заказе"""
+        import threading
         import asyncio
         
-        try:
-            # Создаем новый event loop для синхронного вызова
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        result = [None]  # Используем список для передачи результата между потоками
+        exception = [None]
+        
+        def run_async():
             try:
-                return loop.run_until_complete(self.send_new_order_notification(order))
-            finally:
-                loop.close()
-        except Exception as e:
-            logger.error(f"Ошибка при синхронной отправке уведомления: {e}")
+                # Создаем новый event loop в отдельном потоке
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    result[0] = loop.run_until_complete(self.send_new_order_notification(order))
+                finally:
+                    loop.close()
+            except Exception as e:
+                exception[0] = e
+        
+        # Запускаем в отдельном потоке
+        thread = threading.Thread(target=run_async)
+        thread.start()
+        thread.join(timeout=30)  # Ждем максимум 30 секунд
+        
+        if exception[0]:
+            logger.error(f"Ошибка при синхронной отправке уведомления: {exception[0]}")
             return None
+            
+        return result[0]
     
     async def send_new_order_notification(self, order) -> Optional[int]:
         """
