@@ -29,34 +29,51 @@ class StaffNotificationService:
     
     def send_new_order_notification_sync(self, order) -> Optional[int]:
         """Синхронная отправка уведомления о новом заказе"""
-        import threading
-        import asyncio
-        
-        result = [None]  # Используем список для передачи результата между потоками
-        exception = [None]
-        
-        def run_async():
-            try:
-                # Создаем новый event loop в отдельном потоке
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    result[0] = loop.run_until_complete(self.send_new_order_notification(order))
-                finally:
-                    loop.close()
-            except Exception as e:
-                exception[0] = e
-        
-        # Запускаем в отдельном потоке
-        thread = threading.Thread(target=run_async)
-        thread.start()
-        thread.join(timeout=30)  # Ждем максимум 30 секунд
-        
-        if exception[0]:
-            logger.error(f"Ошибка при синхронной отправке уведомления: {exception[0]}")
-            return None
+        try:
+            from telegram import Bot
+            from telegram.error import TelegramError
+            from django.utils import timezone
             
-        return result[0]
+            # Создаем синхронный бот
+            sync_bot = Bot(token=self.bot_token)
+            
+            if not self.chat_id:
+                logger.warning("STAFF_CHAT_ID не установлен. Уведомление не отправлено.")
+                return None
+            
+            # Формируем текст уведомления синхронно
+            message_text = self._format_order_message_sync(order)
+            
+            # Создаем клавиатуру с кнопкой "Доставлено"
+            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+            keyboard = InlineKeyboardButton(
+                "✅ Доставлено", 
+                callback_data=f"deliver_order_{order.id}"
+            )
+            reply_markup = InlineKeyboardMarkup([[keyboard]])
+            
+            # Отправляем сообщение синхронно
+            message = sync_bot.send_message(
+                chat_id=self.chat_id,
+                text=message_text,
+                parse_mode='Markdown',
+                reply_markup=reply_markup
+            )
+            
+            # Обновляем заказ
+            order.staff_notification_sent = True
+            order.staff_message_id = message.message_id
+            order.save(update_fields=['staff_notification_sent', 'staff_message_id'])
+            
+            logger.info(f"Уведомление о заказе #{order.order_number} отправлено персоналу")
+            return message.message_id
+            
+        except TelegramError as e:
+            logger.error(f"Ошибка отправки уведомления о заказе #{order.order_number}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Неожиданная ошибка при отправке уведомления: {e}")
+            return None
     
     async def send_new_order_notification(self, order) -> Optional[int]:
         """
@@ -120,8 +137,60 @@ class StaffNotificationService:
             if order_item.quantity > 1:
                 item_text += f" x{order_item.quantity}"
             
-            if order_item.selected_addons.exists():
+            # Проверяем есть ли добавки
+            if await sync_to_async(order_item.selected_addons.exists)():
                 addons = await sync_to_async(lambda: list(order_item.selected_addons.all()))()
+                addon_names = [addon.addon.name for addon in addons]
+                item_text += f" + {', '.join(addon_names)}"
+            
+            item_text += f" - {order_item.total_price} ₽"
+            items_text += item_text + "\n"
+        
+        # Определяем тип получения
+        delivery_type = "🏃 Самовывоз" if order.delivery_type == 'pickup' else "🚚 Доставка"
+        
+        message_text = f"""
+🆕 *НОВЫЙ ЗАКАЗ #{order.order_number}*
+
+🏪 *Кафе:* {order.cafe.name}
+👤 *Клиент:* {order.customer_name}
+📞 *Телефон:* {order.customer_phone}
+{delivery_type}
+
+📋 *Состав заказа:*
+{items_text}
+💰 *Общая сумма:* {order.total_amount} ₽
+
+⏰ *Время заказа:* {order.created_at.strftime('%H:%M')}
+"""
+        
+        if order.delivery_type == 'delivery' and order.delivery_address:
+            message_text += f"📍 *Адрес доставки:* {order.delivery_address}\n"
+        
+        if order.comment:
+            message_text += f"💬 *Комментарий:* {order.comment}\n"
+        
+        return message_text.strip()
+    
+    def _format_order_message_sync(self, order) -> str:
+        """Синхронная версия форматирования сообщения с информацией о заказе"""
+        
+        # Получаем позиции заказа
+        items_text = ""
+        items = list(order.items.all())
+        
+        for order_item in items:
+            item_text = f"• {order_item.menu_item.name}"
+            
+            if order_item.variant:
+                item_text += f" ({order_item.variant.name})"
+            
+            if order_item.quantity > 1:
+                item_text += f" x{order_item.quantity}"
+            
+            # Проверяем есть ли добавки
+            if order_item.selected_addons.exists():
+                addons = list(order_item.selected_addons.all())
                 addon_names = [addon.addon.name for addon in addons]
                 item_text += f" + {', '.join(addon_names)}"
             
@@ -217,18 +286,3 @@ class StaffNotificationService:
 
 # Глобальный экземпляр сервиса
 staff_notification_service = StaffNotificationService()
-
-
-def send_order_notification_sync(order):
-    """Синхронная обертка для отправки уведомления"""
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(
-            staff_notification_service.send_new_order_notification(order)
-        )
-    except Exception as e:
-        logger.error(f"Ошибка отправки синхронного уведомления: {e}")
-        return None
-    finally:
-        loop.close()

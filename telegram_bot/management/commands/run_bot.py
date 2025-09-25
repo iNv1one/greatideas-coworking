@@ -510,13 +510,11 @@ class TelegramBot:
             logger.error(f"Ошибка обновления статуса заказа: {e}")
     
     async def _notify_staff_about_order(self, order):
-        """Отправить уведомление персоналу о новом заказе"""
+        """Отправить уведомление персоналу о новому заказе"""
         try:
             from orders.staff_notifications import staff_notification_service
-            # Запускаем уведомление в отдельном потоке чтобы избежать проблем с sync/async
-            await sync_to_async(
-                lambda: staff_notification_service.send_new_order_notification_sync(order)
-            )()
+            # Используем синхронную версию напрямую в sync_to_async
+            await sync_to_async(staff_notification_service.send_new_order_notification_sync)(order)
         except Exception as e:
             logger.error(f"Ошибка отправки уведомления персоналу: {e}")
     
