@@ -27,22 +27,16 @@
                 
                 // Если есть initData, отправляем на сервер для авторизации
                 if (tg.initData) {
-                    // Добавляем данные авторизации во все AJAX запросы
+                    // Добавляем данные авторизации только к определенным запросам
                     const originalFetch = window.fetch;
                     window.fetch = function(url, options = {}) {
-                        if (!options.headers) options.headers = {};
-                        options.headers['X-Telegram-Init-Data'] = tg.initData;
+                        // Добавляем заголовок только для запросов авторизации
+                        if (url.includes('/users/telegram-auth/')) {
+                            if (!options.headers) options.headers = {};
+                            options.headers['X-Telegram-Init-Data'] = tg.initData;
+                        }
                         return originalFetch(url, options);
                     };
-                    
-                    // Также добавляем в jQuery AJAX если используется
-                    if (window.jQuery) {
-                        jQuery.ajaxSetup({
-                            beforeSend: function(xhr) {
-                                xhr.setRequestHeader('X-Telegram-Init-Data', tg.initData);
-                            }
-                        });
-                    }
                     
                     // Отправляем данные для авторизации при загрузке страницы
                     fetch('/users/telegram-auth/', {

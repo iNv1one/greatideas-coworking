@@ -29,6 +29,9 @@ class TelegramWebAppAuthMiddleware:
     def _try_telegram_auth(self, request):
         """Попытка авторизации через Telegram WebApp данные"""
         try:
+            # Пропускаем AJAX запросы к корзине чтобы не мешать им
+            if request.path.startswith('/add-to-cart/') or request.path.startswith('/cart/'):
+                return
             # Проверяем наличие Telegram WebApp данных в заголовках или параметрах
             init_data = None
             
