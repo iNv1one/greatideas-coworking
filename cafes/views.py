@@ -132,6 +132,9 @@ def add_to_cart(request):
     if request.method == 'POST':
         import json
         
+        # Проверяем, нужно ли очистить корзину после оплаты
+        _check_and_clear_paid_cart(request)
+        
         # Определяем формат данных
         if request.content_type == 'application/json':
             # Данные в формате JSON
@@ -186,6 +189,9 @@ def add_to_cart(request):
 
 def cart(request):
     """Страница корзины"""
+    # Проверяем, нужно ли очистить корзину после оплаты
+    _check_and_clear_paid_cart(request)
+    
     cart = request.session.get('cart', {})
     cart_items = []
     total_price = 0
@@ -386,5 +392,41 @@ def remove_from_cart(request):
                 'total_price': total_price,
                 'total_items': total_items  # Общее количество товаров для навбара
             })
+
+
+def _check_and_clear_paid_cart(request):
+    """Проверяет, есть ли оплаченные заказы из текущей корзины, и очищает корзину если есть"""
+    try:
+        # Получаем корзину
+        cart = request.session.get('cart', {})
+        if not cart:
+            return
+        
+        # Если пользователь авторизован через Telegram
+        if request.user.is_authenticated:
+            from users.models import TelegramUser
+            from orders.models import Order
+            from datetime import timedelta
+            from django.utils import timezone
+            
+            try:
+                telegram_user = TelegramUser.objects.filter(user=request.user).first()
+                if telegram_user:
+                    # Проверяем, есть ли оплаченные заказы за последние 10 минут
+                    recent_paid_orders = Order.objects.filter(
+                        user=telegram_user,
+                        status__in=['confirmed', 'preparing', 'ready', 'delivered'],
+                        created_at__gte=timezone.now() - timedelta(minutes=10)
+                    ).exists()
+                    
+                    if recent_paid_orders:
+                        # Очищаем корзину
+                        del request.session['cart']
+                        request.session.modified = True
+                        print(f"DEBUG: Корзина очищена для пользователя {telegram_user.telegram_id} из-за оплаченного заказа")
+            except Exception as e:
+                print(f"DEBUG: Ошибка при проверке оплаченных заказов: {e}")
+    except Exception as e:
+        print(f"DEBUG: Ошибка в _check_and_clear_paid_cart: {e}")
     
     return JsonResponse({'success': False})
