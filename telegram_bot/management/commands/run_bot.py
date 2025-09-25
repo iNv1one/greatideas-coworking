@@ -71,7 +71,7 @@ class TelegramBot:
 
 *GreatIdeas* — это коворкинг с отличной атмосферой.
 
-Для заказа напитков и еды используйте наш сайт: https://coworking.greatideas.ru/
+Нажмите на кнопку ниже, чтобы открыть приложение!
         """
         
         await update.message.reply_text(
