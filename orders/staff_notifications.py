@@ -257,7 +257,7 @@ class StaffNotificationService:
             
             # Обновляем статус
             order.status = 'delivered'
-            order.delivered_at = timezone.now()
+            order.delivered_at = await sync_to_async(timezone.now)()
             await sync_to_async(order.save)(update_fields=['status', 'delivered_at'])
             
             # Обновляем сообщение в чате персонала
