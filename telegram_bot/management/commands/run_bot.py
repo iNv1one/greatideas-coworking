@@ -1,8 +1,8 @@
 import os
 import logging
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+from telegram import Update
+from telegram.ext import Application, CommandHandler, ContextTypes
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from asgiref.sync import sync_to_async
@@ -116,14 +116,7 @@ class TelegramBot:
                 # Очистить корзину пользователя
                 await self._clear_user_cart(user.id)
                 
-                # Отправляем подтверждение пользователю с номером заказа и ссылкой для отслеживания
-                tracking_url = f"https://coworking.greatideas.ru/orders/status/{order.order_number}/"
-                
-                keyboard = [
-                    [InlineKeyboardButton("🔍 Отследить заказ", url=tracking_url)]
-                ]
-                reply_markup = InlineKeyboardMarkup(keyboard)
-                
+                # Отправляем подтверждение пользователю
                 await update.message.reply_text(
                     f"✅ *Платеж успешен!*\n"
                     f"Номер заказа: *#{order.order_number}*\n"
@@ -133,9 +126,8 @@ class TelegramBot:
                     f"🔔 Вы получите уведомление, когда заказ будет готов.\n\n"
                     f"🏪 Кафе: {order.cafe.name}\n"
                     f"📍 {order.cafe.address}\n\n"
-                    f"👆 *Нажмите кнопку выше для отслеживания заказа*",
-                    parse_mode='Markdown',
-                    reply_markup=reply_markup
+                    f"� *Посмотреть ваш заказ вы можете в приложении*",
+                    parse_mode='Markdown'
                 )
             else:
                 # Если заказ не найден
