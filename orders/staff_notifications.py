@@ -112,7 +112,7 @@ class StaffNotificationService:
         items = await sync_to_async(lambda: list(order.items.all()))()
         
         for order_item in items:
-            item_text = f"• {order_item.product.name}"
+            item_text = f"• {order_item.menu_item.name}"
             
             if order_item.variant:
                 item_text += f" ({order_item.variant.name})"
@@ -120,9 +120,9 @@ class StaffNotificationService:
             if order_item.quantity > 1:
                 item_text += f" x{order_item.quantity}"
             
-            if order_item.addons.exists():
-                addons = await sync_to_async(lambda: list(order_item.addons.all()))()
-                addon_names = [addon.name for addon in addons]
+            if order_item.selected_addons.exists():
+                addons = await sync_to_async(lambda: list(order_item.selected_addons.all()))()
+                addon_names = [addon.addon.name for addon in addons]
                 item_text += f" + {', '.join(addon_names)}"
             
             item_text += f" - {order_item.total_price} ₽"
