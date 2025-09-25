@@ -30,12 +30,8 @@ class StaffNotificationService:
     def send_new_order_notification_sync(self, order) -> Optional[int]:
         """Синхронная отправка уведомления о новом заказе"""
         try:
-            from telegram import Bot
-            from telegram.error import TelegramError
+            import requests
             from django.utils import timezone
-            
-            # Создаем синхронный бот
-            sync_bot = Bot(token=self.bot_token)
             
             if not self.chat_id:
                 logger.warning("STAFF_CHAT_ID не установлен. Уведомление не отправлено.")
@@ -45,32 +41,43 @@ class StaffNotificationService:
             message_text = self._format_order_message_sync(order)
             
             # Создаем клавиатуру с кнопкой "Доставлено"
-            from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-            keyboard = InlineKeyboardButton(
-                "✅ Доставлено", 
-                callback_data=f"deliver_order_{order.id}"
-            )
-            reply_markup = InlineKeyboardMarkup([[keyboard]])
+            keyboard = {
+                "inline_keyboard": [[{
+                    "text": "✅ Доставлено",
+                    "callback_data": f"deliver_order_{order.id}"
+                }]]
+            }
             
-            # Отправляем сообщение синхронно
-            message = sync_bot.send_message(
-                chat_id=self.chat_id,
-                text=message_text,
-                parse_mode='Markdown',
-                reply_markup=reply_markup
-            )
+            # Отправляем сообщение через HTTP API
+            url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
+            payload = {
+                'chat_id': self.chat_id,
+                'text': message_text,
+                'parse_mode': 'Markdown',
+                'reply_markup': keyboard
+            }
             
-            # Обновляем заказ
-            order.staff_notification_sent = True
-            order.staff_message_id = message.message_id
-            order.save(update_fields=['staff_notification_sent', 'staff_message_id'])
+            response = requests.post(url, json=payload, timeout=30)
             
-            logger.info(f"Уведомление о заказе #{order.order_number} отправлено персоналу")
-            return message.message_id
+            if response.status_code == 200:
+                result = response.json()
+                if result.get('ok'):
+                    message_id = result['result']['message_id']
+                    
+                    # Обновляем заказ
+                    order.staff_notification_sent = True
+                    order.staff_message_id = message_id
+                    order.save(update_fields=['staff_notification_sent', 'staff_message_id'])
+                    
+                    logger.info(f"Уведомление о заказе #{order.order_number} отправлено персоналу")
+                    return message_id
+                else:
+                    logger.error(f"Telegram API ошибка: {result.get('description', 'Unknown error')}")
+                    return None
+            else:
+                logger.error(f"HTTP ошибка при отправке уведомления: {response.status_code}")
+                return None
             
-        except TelegramError as e:
-            logger.error(f"Ошибка отправки уведомления о заказе #{order.order_number}: {e}")
-            return None
         except Exception as e:
             logger.error(f"Неожиданная ошибка при отправке уведомления: {e}")
             return None
