@@ -1,7 +1,7 @@
 import os
 import logging
 import asyncio
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebApp
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from django.core.management.base import BaseCommand
 from django.conf import settings
@@ -31,8 +31,11 @@ class TelegramBot:
         from telegram.ext import PreCheckoutQueryHandler, MessageHandler, filters
         
         self.application.add_handler(CommandHandler("start", self.start_command))
+        self.application.add_handler(CommandHandler("help", self.help_command))
+        self.application.add_handler(CommandHandler("orders", self.orders_command))
+        self.application.add_handler(CallbackQueryHandler(self.button_callback))
         
-        # Обработчики платежей (оставляем для работы мини-приложения)
+        # Обработчики платежей
         self.application.add_handler(PreCheckoutQueryHandler(self.handle_pre_checkout_query))
         self.application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, self.handle_successful_payment))
     
@@ -65,16 +68,27 @@ class TelegramBot:
         telegram_user, created = await save_telegram_user()
         
         welcome_text = f"""
-🎉 *Добро пожаловать в GreatIdeas Coworking!*
+🎉 *Добро пожаловать в GreatIdeas!*
 
 Привет, {user.first_name}! 👋
 
-Для заказа напитков и еды используйте наше веб-приложение:
+*GreatIdeas* — это сеть уютных кафе с отличной едой и атмосферой. Мы объединили лучшие заведения города под одной крышей!
+
+🏪 *Что мы предлагаем:*
+• Несколько уникальных кафе
+• Разнообразное меню в каждом заведении  
+• Удобный заказ через бот
+• Быстрая доставка или самовывоз
+
+Выберите действие:
         """
         
-        # Создаем кнопку для запуска мини-приложения
+        # Создаем клавиатуру с кнопками
         keyboard = [
-            [InlineKeyboardButton("🚀 Открыть меню", web_app=WebApp(url="https://coworking.greatideas.ru/"))],
+            [InlineKeyboardButton("🏪 Выбрать кафе", callback_data="show_cafes")],
+            [InlineKeyboardButton("📋 Мои заказы", callback_data="my_orders")],
+            [InlineKeyboardButton("ℹ️ О сервисе", callback_data="about_service")],
+            [InlineKeyboardButton("🌐 Открыть веб-сайт", url="https://coworking.greatideas.ru/")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
