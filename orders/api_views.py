@@ -110,6 +110,14 @@ def create_payment(request):
         # Создаем сервис платежей
         payment_service = TelegramPaymentService()
         
+        # Проверяем обязательное поле workspace_number
+        workspace_number = data.get('workspace_number')
+        if not workspace_number or workspace_number < 1 or workspace_number > 30:
+            return JsonResponse({
+                'success': False,
+                'error': 'Необходимо выбрать номер рабочего места (от 1 до 30)'
+            }, status=400)
+        
         # Создаем заказ
         order = payment_service.create_order_from_cart(
             telegram_user=telegram_user,
@@ -118,6 +126,7 @@ def create_payment(request):
             customer_name=data.get('customer_name', ''),
             customer_phone=data.get('customer_phone', ''),
             delivery_address=data.get('delivery_address', ''),
+            workspace_number=workspace_number,
             comment=data.get('comment', ''),
         )
         

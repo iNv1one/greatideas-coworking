@@ -236,6 +236,20 @@ main {
                             <div class="col-md-6 text-md-end">
                                 <div class="h2 mb-3" id="totalPrice">{{ total_price }} ₽</div>
                                 
+                                <!-- Выбор рабочего места -->
+                                <div class="mb-3">
+                                    <label for="workspaceNumber" class="form-label text-white">
+                                        <i class="fas fa-map-marker-alt me-2"></i>Номер рабочего места *
+                                    </label>
+                                    <select class="form-select" id="workspaceNumber" required>
+                                        <option value="">Выберите место</option>
+                                        {% for i in "x"|ljust:"30" %}
+                                            <option value="{{ forloop.counter }}">Место {{ forloop.counter }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-light opacity-75">Обязательное поле для доставки заказа</small>
+                                </div>
+                                
                                 <!-- Кнопки оплаты -->
                                 <div class="payment-buttons">
                                     <!-- Telegram Payment кнопка -->
@@ -377,6 +391,14 @@ function proceedToCheckout() {
 }
 
 function payWithTelegram() {
+    // Проверяем выбор рабочего места
+    const workspaceNumber = document.getElementById('workspaceNumber').value;
+    if (!workspaceNumber) {
+        alert('Пожалуйста, выберите номер рабочего места для доставки заказа');
+        document.getElementById('workspaceNumber').focus();
+        return;
+    }
+    
     // Проверяем, что мы в Telegram Web App
     if (!window.Telegram || !window.Telegram.WebApp) {
         alert('Эта функция доступна только в Telegram Web App');
@@ -413,6 +435,7 @@ function payWithTelegram() {
             delivery_type: 'pickup',
             customer_name: user.first_name + ' ' + (user.last_name || ''),
             customer_phone: user.phone_number || '',
+            workspace_number: parseInt(workspaceNumber),
             comment: ''
         })
     })

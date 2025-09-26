@@ -42,6 +42,9 @@ class Order(models.Model):
     customer_phone = models.CharField(max_length=20, verbose_name="Телефон клиента")
     delivery_address = models.TextField(blank=True, verbose_name="Адрес доставки")
     
+    # Номер рабочего места
+    workspace_number = models.PositiveIntegerField(verbose_name="Номер рабочего места", help_text="Номер места от 1 до 30")
+    
     # Дополнительная информация
     comment = models.TextField(blank=True, verbose_name="Комментарий к заказу")
     

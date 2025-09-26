@@ -162,6 +162,7 @@ class StaffNotificationService:
 🏪 *Кафе:* {order.cafe.name}
 👤 *Клиент:* {order.customer_name}
 📞 *Телефон:* {order.customer_phone}
+📍 *Рабочее место:* №{order.workspace_number}
 {delivery_type}
 
 📋 *Состав заказа:*
@@ -213,6 +214,7 @@ class StaffNotificationService:
 🏪 *Кафе:* {order.cafe.name}
 👤 *Клиент:* {order.customer_name}
 📞 *Телефон:* {order.customer_phone}
+📍 *Рабочее место:* №{order.workspace_number}
 {delivery_type}
 
 📋 *Состав заказа:*

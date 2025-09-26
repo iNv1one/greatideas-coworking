@@ -23,6 +23,7 @@ class TelegramPaymentService:
                               customer_name: str = '', 
                               customer_phone: str = '',
                               delivery_address: str = '',
+                              workspace_number: int = None,
                               comment: str = '') -> Order:
         """
         Создает заказ из данных корзины
@@ -72,6 +73,7 @@ class TelegramPaymentService:
             customer_name=customer_name or telegram_user.first_name or 'Клиент',
             customer_phone=customer_phone,
             delivery_address=delivery_address,
+            workspace_number=workspace_number or 1,  # По умолчанию место 1
             comment=comment,
             total_amount=Decimal('0')  # Пока ставим 0, потом пересчитаем
         )
