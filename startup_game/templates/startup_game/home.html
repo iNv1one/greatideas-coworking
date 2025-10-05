@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'startup_game/css/game.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="game-hero">
+    <div class="container text-center text-white py-5">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-rocket me-3"></i>
+            Startup Simulator
+        </h1>
+        <p class="lead mb-4">
+            Создай свой стартап с нуля и приведи его к успеху!
+        </p>
+        <p class="mb-5">
+            Принимай решения, нанимай сотрудников, привлекай клиентов и развивай свою компанию. 
+            Каждое решение влияет на будущее твоего бизнеса!
+        </p>
+        
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="game-features mb-5">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="feature-card">
+                                <i class="fas fa-chart-line fa-2x mb-3"></i>
+                                <h5>Управляй финансами</h5>
+                                <p>Контролируй доходы и расходы</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="feature-card">
+                                <i class="fas fa-users fa-2x mb-3"></i>
+                                <h5>Нанимай команду</h5>
+                                <p>Собери лучших специалистов</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="feature-card">
+                                <i class="fas fa-star fa-2x mb-3"></i>
+                                <h5>Повышай репутацию</h5>
+                                <p>Завоевывай доверие клиентов</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if user.is_authenticated %}
+                    <div class="game-actions">
+                        <a href="{% url 'startup_game:play' %}" class="btn btn-success btn-lg me-3">
+                            <i class="fas fa-play me-2"></i>Продолжить игру
+                        </a>
+                        <button class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#newGameModal">
+                            <i class="fas fa-plus me-2"></i>Новая игра
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Для игры необходимо войти в систему
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно новой игры -->
+{% if user.is_authenticated %}
+<div class="modal fade" id="newGameModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Новая игра</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'startup_game:new_game' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="company_name" class="form-label">Название компании</label>
+                        <input type="text" class="form-control" id="company_name" name="company_name" 
+                               value="{{ user.username }}'s Startup" required>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Внимание!</strong> Создание новой игры завершит текущую сессию.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Начать игру</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'startup_game/js/game.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,328 @@
+/* Startup Game Styles */
+
+/* Hero секция */
+.game-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.feature-card {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    padding: 2rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-5px);
+}
+
+/* Игровая панель статистики */
+.game-stats-panel {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+.stat-card i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Цветовая схема для статистик */
+.stat-card.money { border-left: 4px solid #28a745; }
+.stat-card.money i { color: #28a745; }
+
+.stat-card.reputation { border-left: 4px solid #ffc107; }
+.stat-card.reputation i { color: #ffc107; }
+
+.stat-card.employees { border-left: 4px solid #17a2b8; }
+.stat-card.employees i { color: #17a2b8; }
+
+.stat-card.customers { border-left: 4px solid #dc3545; }
+.stat-card.customers i { color: #dc3545; }
+
+.stat-card.day { border-left: 4px solid #6f42c1; }
+.stat-card.day i { color: #6f42c1; }
+
+.stat-card.level { border-left: 4px solid #fd7e14; }
+.stat-card.level i { color: #fd7e14; }
+
+/* Игровая основная панель */
+.game-main-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    min-height: 600px;
+}
+
+.company-description {
+    color: #6c757d;
+    margin-bottom: 2rem;
+}
+
+/* Кнопки действий */
+.actions-grid .action-btn {
+    width: 100%;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
+    color: inherit;
+}
+
+.action-btn:hover {
+    border-color: #007bff;
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,123,255,0.2);
+    color: inherit;
+    text-decoration: none;
+}
+
+.action-btn i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #007bff;
+}
+
+.action-btn h5 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.action-btn p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.action-btn:disabled:hover {
+    border-color: #e9ecef;
+    background: white;
+    box-shadow: none;
+}
+
+/* Специальные кнопки */
+.next-day-btn {
+    border-color: #28a745 !important;
+}
+
+.next-day-btn:hover {
+    border-color: #1e7e34 !important;
+    background: #f8fff9 !important;
+    box-shadow: 0 5px 15px rgba(40,167,69,0.2) !important;
+}
+
+.next-day-btn i {
+    color: #28a745 !important;
+}
+
+/* Информационная панель */
+.info-panel {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    height: fit-content;
+}
+
+.game-log {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+    background: #f8f9fa;
+}
+
+.log-entry {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border-left: 3px solid #007bff;
+    font-size: 0.9rem;
+    animation: slideIn 0.3s ease;
+}
+
+.log-entry:last-child {
+    margin-bottom: 0;
+}
+
+.log-entry.success {
+    border-left-color: #28a745;
+}
+
+.log-entry.warning {
+    border-left-color: #ffc107;
+}
+
+.log-entry.error {
+    border-left-color: #dc3545;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Быстрая статистика */
+.quick-stats {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1rem;
+}
+
+.quick-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.quick-stat span:last-child {
+    font-weight: 600;
+    color: #007bff;
+}
+
+/* Игровые элементы управления */
+.game-controls {
+    border-top: 1px solid #e9ecef;
+    padding-top: 1rem;
+}
+
+.game-controls .btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Анимации статистики */
+.stat-change {
+    animation: statBounce 0.6s ease;
+}
+
+@keyframes statBounce {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .game-stats-panel .row > div {
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card {
+        padding: 1rem 0.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .action-btn {
+        padding: 1rem;
+    }
+    
+    .action-btn i {
+        font-size: 1.5rem;
+    }
+    
+    .game-main-panel, .info-panel {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Успех/ошибка уведомления */
+.game-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 300px;
+    padding: 1rem;
+    border-radius: 8px;
+    color: white;
+    font-weight: 500;
+    animation: slideInRight 0.3s ease;
+}
+
+.game-notification.success {
+    background: #28a745;
+}
+
+.game-notification.error {
+    background: #dc3545;
+}
+
+.game-notification.info {
+    background: #17a2b8;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

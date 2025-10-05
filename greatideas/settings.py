@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'users',
     'payments',
     'telegram_bot',
+    'startup_game',
 ]
 
 MIDDLEWARE = [

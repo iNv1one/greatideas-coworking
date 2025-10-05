@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/orders/', include('orders.api_urls')),
     path('orders/', include('orders.tracking_urls')),
     path('payments/', include('payments.urls')),
+    path('game/', include('startup_game.urls')),
 ]
 
 # Для обслуживания медиа файлов в режиме разработки

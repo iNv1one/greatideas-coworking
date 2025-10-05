@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Startup Game - Играть{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'startup_game/css/game.css' %}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'startup_game/js/game.js' %}"></script>
+<script>
+// Передаем данные игры из Django в JavaScript
+window.gameData = {
+    money: {{ game_session.money }},
+    reputation: {{ game_session.reputation }},
+    employees: {{ game_session.employees }},
+    customers: {{ game_session.customers }},
+    day: {{ game_session.day }},
+    level: {{ game_session.level }}
+};
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="game-container">
+    <div class="container-fluid py-4">
+        <!-- Заголовок игры -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="game-header text-center">
+                    <h2><i class="fas fa-rocket me-2"></i>Startup Simulator</h2>
+                    <p class="game-subtitle">Развивайте свой стартап и станьте успешным предпринимателем!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика игры -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="stats-container">
+                    <div class="row g-3">
+                        <div class="col-6 col-md-2">
+                            <div class="stat-card money">
+                                <div class="stat-icon">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="money">{{ game_session.money }}</div>
+                                    <div class="stat-label">Деньги</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-card reputation">
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="reputation">{{ game_session.reputation }}</div>
+                                    <div class="stat-label">Репутация</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-card employees">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="employees">{{ game_session.employees }}</div>
+                                    <div class="stat-label">Сотрудники</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-card customers">
+                                <div class="stat-icon">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="customers">{{ game_session.customers }}</div>
+                                    <div class="stat-label">Клиенты</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-2">
+                            <div class="stat-card day">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="day">{{ game_session.day }}</div>
+                                    <div class="stat-label">День</div>
+                                </div>
+                            </div>
+                        </div>
+                <div class="col-md-2">
+                    <div class="stat-card level">
+                        <i class="fas fa-trophy"></i>
+                        <div class="stat-value" id="level">{{ session.level }}</div>
+                        <div class="stat-label">Уровень</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Игровые действия -->
+            <div class="col-md-8">
+                <div class="game-main-panel">
+                    <h2>{{ session.company_name }}</h2>
+                    <p class="company-description">
+                        Добро пожаловать в ваш стартап! Принимайте решения, которые приведут компанию к успеху.
+                    </p>
+
+                    <!-- Игровые кнопки действий -->
+                    <div class="actions-grid">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <button class="action-btn" onclick="gameAction('hire_employee')" id="hire-btn">
+                                    <i class="fas fa-user-plus"></i>
+                                    <h5>Нанять сотрудника</h5>
+                                    <p>Стоимость: <span id="hire-cost">200</span>$</p>
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <button class="action-btn" onclick="gameAction('marketing_campaign')" id="marketing-btn">
+                                    <i class="fas fa-bullhorn"></i>
+                                    <h5>Маркетинг</h5>
+                                    <p>Стоимость: 300$</p>
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <button class="action-btn" onclick="gameAction('upgrade_office')" id="office-btn">
+                                    <i class="fas fa-building"></i>
+                                    <h5>Улучшить офис</h5>
+                                    <p>Стоимость: 500$</p>
+                                </button>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <button class="action-btn next-day-btn" onclick="gameAction('next_day')" id="next-day-btn">
+                                    <i class="fas fa-forward"></i>
+                                    <h5>Следующий день</h5>
+                                    <p>Завершить день</p>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Боковая панель с информацией -->
+            <div class="col-md-4">
+                <div class="info-panel">
+                    <h4>Информация</h4>
+                    <div id="game-log" class="game-log">
+                        <div class="log-entry">
+                            <i class="fas fa-info-circle text-primary"></i>
+                            Добро пожаловать в игру! Начните с найма сотрудников или маркетинговой кампании.
+                        </div>
+                    </div>
+
+                    <div class="quick-stats mt-4">
+                        <h5>Быстрая статистика</h5>
+                        <div class="quick-stat">
+                            <span>Ежедневный доход:</span>
+                            <span id="daily-income">{{ session.customers|add:"0" }}$</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span>Ежедневные расходы:</span>
+                            <span id="daily-expenses">{{ session.employees|add:"0" }}$</span>
+                        </div>
+                    </div>
+
+                    <div class="game-controls mt-4">
+                        <a href="{% url 'startup_game:home' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-home me-1"></i>На главную
+                        </a>
+                        <a href="{% url 'startup_game:stats' %}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-chart-bar me-1"></i>Статистика
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно события -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventTitle">Событие</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="eventDescription"></div>
+                <div id="eventEffects" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Понятно</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'startup_game/js/game.js' %}"></script>
+<script>
+// Инициализация игровых данных
+window.gameData = {
+    money: {{ session.money }},
+    reputation: {{ session.reputation }},
+    employees: {{ session.employees }},
+    customers: {{ session.customers }},
+    day: {{ session.day }},
+    level: {{ session.level }}
+};
+</script>
+{% endblock %}
