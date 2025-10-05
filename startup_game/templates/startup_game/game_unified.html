@@ -41,8 +41,8 @@
 {% block extra_js %}
 <script src="{% static 'startup_game/js/game.js' %}"></script>
 
-{% if session %}
-{{ session|json_script:"game-session-data" }}
+{% if session_data %}
+{{ session_data|json_script:"game-session-data" }}
 <script type="text/javascript">
 // Передаем данные игры из Django в JavaScript
 const sessionData = JSON.parse(document.getElementById('game-session-data').textContent);
@@ -288,7 +288,11 @@ function createCompany() {
                 <div class="col-12">
                     <div class="game-header text-center">
                         <h1 class="display-4 mb-2">{{ session.company_name }}</h1>
-                        <p class="lead">{{ session.get_industry_display }} • День {{ session.day }} • Уровень {{ session.level }}</p>
+                        <p class="lead">
+                            {% if session.get_industry_display %}{{ session.get_industry_display }}{% else %}Стартап{% endif %} • 
+                            День {{ session.day }} • 
+                            Уровень {{ session.level }}
+                        </p>
                     </div>
                 </div>
             </div>

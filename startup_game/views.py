@@ -141,8 +141,38 @@ def game_play(request):
             daily_income = daily_expenses = daily_profit = hire_cost = 0
             page_title = 'Создание стартапа'
         
+        # Подготавливаем данные сессии для JSON
+        session_data = None
+        if session:
+            session_data = {
+                'id': session.id,
+                'company_name': session.company_name,
+                'money': session.money,
+                'reputation': session.reputation,
+                'employees': session.employees,
+                'customers': session.customers,
+                'day': session.day,
+                'level': session.level,
+                'is_active': session.is_active,
+                'game_over': session.game_over,
+                'victory': session.victory,
+            }
+            
+            # Добавляем новые поля если они есть
+            if hasattr(session, 'industry'):
+                session_data['industry'] = session.industry
+            if hasattr(session, 'game_time'):
+                session_data['game_time'] = session.game_time
+            if hasattr(session, 'game_paused'):
+                session_data['game_paused'] = session.game_paused
+            if hasattr(session, 'last_event_day'):
+                session_data['last_event_day'] = session.last_event_day
+            if hasattr(session, 'dice_roll'):
+                session_data['dice_roll'] = session.dice_roll
+        
         context = {
             'session': session,
+            'session_data': session_data,
             'page_title': page_title,
             'daily_income': daily_income,
             'daily_expenses': daily_expenses,
@@ -155,6 +185,7 @@ def game_play(request):
         # В случае любой ошибки показываем простую страницу создания игры
         context = {
             'session': None,
+            'session_data': None,
             'page_title': 'Создание стартапа',
             'daily_income': 0,
             'daily_expenses': 0,
