@@ -35,9 +35,19 @@ def game_play(request):
         }
     )
     
+    # Расчеты для отображения
+    daily_income = session.customers * 10
+    daily_expenses = session.employees * 50
+    daily_profit = daily_income - daily_expenses
+    hire_cost = 200 + (session.employees * 50)
+    
     context = {
         'session': session,
         'page_title': f'{session.company_name} - Day {session.day}',
+        'daily_income': daily_income,
+        'daily_expenses': daily_expenses,
+        'daily_profit': daily_profit,
+        'hire_cost': hire_cost,
     }
     return render(request, 'startup_game/play.html', context)
 

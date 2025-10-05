@@ -9,16 +9,23 @@
 
 {% block extra_js %}
 <script src="{% static 'startup_game/js/game.js' %}"></script>
-<script>
+<script type="text/javascript">
 // Передаем данные игры из Django в JavaScript
-window.gameData = {
-    money: {{ game_session.money }},
-    reputation: {{ game_session.reputation }},
-    employees: {{ game_session.employees }},
-    customers: {{ game_session.customers }},
-    day: {{ game_session.day }},
-    level: {{ game_session.level }}
-};
+document.addEventListener('DOMContentLoaded', function() {
+    window.gameData = {
+        money: parseInt('{{ session.money|default:0 }}'),
+        reputation: parseInt('{{ session.reputation|default:0 }}'),
+        employees: parseInt('{{ session.employees|default:1 }}'),
+        customers: parseInt('{{ session.customers|default:0 }}'),
+        day: parseInt('{{ session.day|default:1 }}'),
+        level: parseInt('{{ session.level|default:1 }}')
+    };
+    
+    // Обновляем интерфейс
+    if (typeof updateGameData === 'function') {
+        updateGameData(window.gameData);
+    }
+});
 </script>
 {% endblock %}
 
@@ -46,7 +53,7 @@ window.gameData = {
                                     <i class="fas fa-dollar-sign"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value" id="money">{{ game_session.money }}</div>
+                                    <div class="stat-value" id="money">{{ session.money }}</div>
                                     <div class="stat-label">Деньги</div>
                                 </div>
                             </div>
@@ -57,7 +64,7 @@ window.gameData = {
                                     <i class="fas fa-star"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value" id="reputation">{{ game_session.reputation }}</div>
+                                    <div class="stat-value" id="reputation">{{ session.reputation }}</div>
                                     <div class="stat-label">Репутация</div>
                                 </div>
                             </div>
@@ -68,7 +75,7 @@ window.gameData = {
                                     <i class="fas fa-users"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value" id="employees">{{ game_session.employees }}</div>
+                                    <div class="stat-value" id="employees">{{ session.employees }}</div>
                                     <div class="stat-label">Сотрудники</div>
                                 </div>
                             </div>
@@ -79,7 +86,7 @@ window.gameData = {
                                     <i class="fas fa-user-friends"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value" id="customers">{{ game_session.customers }}</div>
+                                    <div class="stat-value" id="customers">{{ session.customers }}</div>
                                     <div class="stat-label">Клиенты</div>
                                 </div>
                             </div>
@@ -90,7 +97,7 @@ window.gameData = {
                                     <i class="fas fa-calendar"></i>
                                 </div>
                                 <div class="stat-info">
-                                    <div class="stat-value" id="day">{{ game_session.day }}</div>
+                                    <div class="stat-value" id="day">{{ session.day }}</div>
                                     <div class="stat-label">День</div>
                                 </div>
                             </div>
@@ -165,11 +172,15 @@ window.gameData = {
                         <h5>Быстрая статистика</h5>
                         <div class="quick-stat">
                             <span>Ежедневный доход:</span>
-                            <span id="daily-income">{{ session.customers|add:"0" }}$</span>
+                            <span id="daily-income">{{ daily_income }}$</span>
                         </div>
                         <div class="quick-stat">
                             <span>Ежедневные расходы:</span>
-                            <span id="daily-expenses">{{ session.employees|add:"0" }}$</span>
+                            <span id="daily-expenses">{{ daily_expenses }}$</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span>Прибыль:</span>
+                            <span class="{% if daily_profit >= 0 %}text-success{% else %}text-danger{% endif %}">{{ daily_profit }}$</span>
                         </div>
                     </div>
 
@@ -205,19 +216,4 @@ window.gameData = {
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'startup_game/js/game.js' %}"></script>
-<script>
-// Инициализация игровых данных
-window.gameData = {
-    money: {{ session.money }},
-    reputation: {{ session.reputation }},
-    employees: {{ session.employees }},
-    customers: {{ session.customers }},
-    day: {{ session.day }},
-    level: {{ session.level }}
-};
-</script>
 {% endblock %}
