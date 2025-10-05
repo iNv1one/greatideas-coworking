@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'startup_game/css/game.css' %}">
+<style>
+.game-screen {
+    min-height: 100vh;
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{% static "startup_game/images/bg1.PNG" %}');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-dialog {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    text-align: center;
+}
+
+.game-dialog h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.game-dialog p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.form-control {
+    border-radius: 15px;
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    border: 2px solid #e9ecef;
+    margin-bottom: 20px;
+}
+
+.form-control:focus {
+    border-color: #FF6B35;
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+}
+
+.btn-game-primary {
+    background: linear-gradient(45deg, #FF6B35, #F39C12);
+    border: none;
+    border-radius: 15px;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-game-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+    color: white;
+}
+
+.btn-game-secondary {
+    background: transparent;
+    border: 2px solid #6c757d;
+    border-radius: 15px;
+    padding: 12px 30px;
+    color: #6c757d;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 15px;
+    transition: all 0.3s ease;
+}
+
+.btn-game-secondary:hover {
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+}
+
+@media (max-width: 768px) {
+    .game-dialog {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="game-screen">
+    <div class="game-dialog">
+        <h2>
+            <i class="fas fa-building me-2"></i>
+            Название компании
+        </h2>
+        <p>Как будет называться ваш стартап?</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <input type="text" 
+                       class="form-control" 
+                       name="company_name" 
+                       value="{{ default_name }}"
+                       placeholder="Введите название компании"
+                       required
+                       maxlength="50">
+            </div>
+            
+            <button type="submit" class="btn btn-game-primary">
+                <i class="fas fa-rocket me-2"></i>
+                Начать игру
+            </button>
+        </form>
+        
+        <a href="{% url 'startup_game:home' %}" class="btn-game-secondary">
+            <i class="fas fa-arrow-left me-2"></i>
+            Назад
+        </a>
+    </div>
+</div>
+{% endblock %}

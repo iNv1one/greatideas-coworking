@@ -24,40 +24,16 @@
         
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="game-features mb-5">
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <div class="feature-card">
-                                <i class="fas fa-chart-line fa-2x mb-3"></i>
-                                <h5>Управляй финансами</h5>
-                                <p>Контролируй доходы и расходы</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="feature-card">
-                                <i class="fas fa-users fa-2x mb-3"></i>
-                                <h5>Нанимай команду</h5>
-                                <p>Собери лучших специалистов</p>
-                            </div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="feature-card">
-                                <i class="fas fa-star fa-2x mb-3"></i>
-                                <h5>Повышай репутацию</h5>
-                                <p>Завоевывай доверие клиентов</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+
                 
                 {% if user.is_authenticated %}
                     <div class="game-actions">
                         <a href="{% url 'startup_game:play' %}" class="btn btn-success btn-lg me-3">
                             <i class="fas fa-play me-2"></i>Продолжить игру
                         </a>
-                        <button class="btn btn-outline-light btn-lg" data-bs-toggle="modal" data-bs-target="#newGameModal">
+                        <a href="{% url 'startup_game:company_name' %}" class="btn btn-outline-light btn-lg">
                             <i class="fas fa-plus me-2"></i>Новая игра
-                        </button>
+                        </a>
                     </div>
                 {% else %}
                     <div class="alert alert-info">
@@ -70,37 +46,7 @@
     </div>
 </div>
 
-<!-- Модальное окно новой игры -->
-{% if user.is_authenticated %}
-<div class="modal fade" id="newGameModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Новая игра</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="post" action="{% url 'startup_game:new_game' %}">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="company_name" class="form-label">Название компании</label>
-                        <input type="text" class="form-control" id="company_name" name="company_name" 
-                               value="{{ user.username }}'s Startup" required>
-                    </div>
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Внимание!</strong> Создание новой игры завершит текущую сессию.
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                    <button type="submit" class="btn btn-primary">Начать игру</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{% endif %}
+
 {% endblock %}
 
 {% block extra_js %}

@@ -18,6 +18,37 @@ def game_home(request):
 
 
 @login_required
+def company_name(request):
+    """Страница выбора названия компании"""
+    if request.method == 'POST':
+        company_name = request.POST.get('company_name', '').strip()
+        if company_name:
+            # Завершаем текущие активные сессии
+            GameSession.objects.filter(user=request.user, is_active=True).update(is_active=False)
+            
+            # Создаем новую игровую сессию
+            session = GameSession.objects.create(
+                user=request.user,
+                company_name=company_name,
+                money=1000,
+                reputation=0,
+                employees=1,
+                customers=0,
+                day=1,
+                level=1,
+                is_active=True
+            )
+            
+            return redirect('startup_game:play')
+    
+    context = {
+        'page_title': 'Название компании - Startup Simulator',
+        'default_name': f"{request.user.username}'s Startup"
+    }
+    return render(request, 'startup_game/company_name.html', context)
+
+
+@login_required
 def game_play(request):
     """Основная игровая страница"""
     # Получаем или создаем игровую сессию
