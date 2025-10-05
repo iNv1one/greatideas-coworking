@@ -68,6 +68,163 @@
     height: calc(100% - 150px);
 }
 
+/* Стили для модального окна */
+.product-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease;
+}
+
+.product-modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.product-modal-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 500px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.product-modal-header {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 10;
+}
+
+.product-modal-close {
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.product-modal-close:hover {
+    background: rgba(0, 0, 0, 0.7);
+    transform: scale(1.1);
+}
+
+.product-modal-image-container {
+    position: relative;
+    height: 250px;
+    overflow: hidden;
+    border-radius: 20px 20px 0 0;
+}
+
+.product-modal-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-modal-body {
+    padding: 1.5rem;
+    padding-top: 1rem;
+}
+
+.product-modal-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.product-modal-description {
+    color: #6c757d;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.product-modal-details {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.product-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+
+.product-detail-item i {
+    color: #FF6B35;
+    width: 16px;
+}
+
+.product-modal-price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FF6B35;
+    margin-bottom: 1.5rem;
+}
+
+.product-modal-footer {
+    padding: 0 1.5rem 1.5rem;
+}
+
+.modal-add-to-cart-btn {
+    width: 100%;
+    background: linear-gradient(45deg, #FF6B35, #f39c12);
+    border: none;
+    color: white;
+    padding: 1rem;
+    border-radius: 15px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.modal-add-to-cart-btn:hover {
+    background: linear-gradient(45deg, #e55a2b, #e67e22);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 53, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(50px) scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
 /* Адаптация для мобильных устройств */
 @media (max-width: 768px) {
     .menu-item-image {
@@ -91,6 +248,31 @@
     
     .menu-item-card {
         border-radius: 15px;
+    }
+    
+    .add-to-cart-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    /* Мобильная адаптация модального окна */
+    .product-modal-content {
+        margin: 0.5rem;
+        max-height: 95vh;
+    }
+    
+    .product-modal-image-container {
+        height: 200px;
+    }
+    
+    .product-modal-title {
+        font-size: 1.3rem;
+    }
+    
+    .product-modal-details {
+        flex-direction: column;
+        gap: 1rem;
     }
 }
 
@@ -125,11 +307,16 @@
     background: linear-gradient(45deg, #FF6B35, #f39c12);
     border: none;
     color: white;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
+    padding: 0.5rem;
+    border-radius: 50%;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 1rem;
     transition: all 0.3s ease;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .add-to-cart-btn:hover {
@@ -282,7 +469,15 @@
                         <div class="row">
                             {% for item in items %}
                                 <div class="col-lg-6 col-md-6 col-6 mb-3">
-                                    <div class="card menu-item-card">
+                                    <div class="card menu-item-card" 
+                                         data-item-id="{{ item.id }}"
+                                         data-item-name="{{ item.name }}"
+                                         data-item-description="{{ item.description|default:'' }}"
+                                         data-item-weight="{{ item.weight|default:'' }}"
+                                         data-item-calories="{{ item.calories|default:'' }}"
+                                         data-item-price="{{ item.price|floatformat:0 }}"
+                                         data-item-image="{{ item.image.url|default:'' }}"
+                                         style="cursor: pointer;">
                                         {% if item.image %}
                                             <img src="{{ item.image.url }}" class="menu-item-image" alt="{{ item.name }}">
                                         {% else %}
@@ -293,29 +488,19 @@
                                         {% endif %}
                                         
                                         <div class="menu-item-body">
-                                            <h5 class="menu-item-name">{{ item.name }}</h5>
+                                            <h5 class="menu-item-name">
+                                                {{ item.name }}{% if item.weight %} ({{ item.weight }} г.){% endif %}
+                                            </h5>
                                             {% if item.description %}
                                                 <p class="menu-item-description">{{ item.description|truncatewords:15 }}</p>
                                             {% endif %}
                                             
-                                            {% if item.weight %}
-                                                <small class="text-muted mb-2 d-block">
-                                                    <i class="fas fa-weight me-1"></i>{{ item.weight }}
-                                                </small>
-                                            {% endif %}
-                                            
-                                            {% if item.calories %}
-                                                <small class="text-muted mb-2 d-block">
-                                                    <i class="fas fa-fire me-1"></i>{{ item.calories }} ккал
-                                                </small>
-                                            {% endif %}
-                                            
                                             <div class="menu-item-footer">
-                                                <span class="menu-item-price">{{ item.price }} ₽</span>
+                                                <span class="menu-item-price">{{ item.price|floatformat:0 }} ₽</span>
                                                 <button class="btn add-to-cart-btn" 
                                                         data-item-id="{{ item.id }}" 
                                                         data-item-name="{{ item.name|escapejs }}">
-                                                    <i class="fas fa-plus me-1"></i>В корзину
+                                                    <i class="fas fa-plus"></i>
                                                 </button>
                                             </div>
                                         </div>
@@ -690,6 +875,154 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Функции для работы с модальным окном продукта
+    function openProductModal(itemData) {
+        const modal = document.getElementById('productModal');
+        const modalImage = document.getElementById('modalProductImage');
+        const modalName = document.getElementById('modalProductName');
+        const modalDescription = document.getElementById('modalProductDescription');
+        const modalWeight = document.getElementById('modalProductWeight');
+        const modalCalories = document.getElementById('modalProductCalories');
+        const modalPrice = document.getElementById('modalProductPrice');
+        const modalButton = document.getElementById('modalAddToCart');
+
+        // Заполняем данные
+        modalName.textContent = itemData.name;
+        modalDescription.textContent = itemData.description || 'Описание отсутствует';
+        modalPrice.textContent = itemData.price;
+
+        // Изображение
+        if (itemData.image) {
+            modalImage.src = itemData.image;
+            modalImage.style.display = 'block';
+        } else {
+            modalImage.style.display = 'none';
+        }
+
+        // Вес
+        if (itemData.weight) {
+            modalWeight.style.display = 'flex';
+            modalWeight.querySelector('.detail-value').textContent = itemData.weight + ' г.';
+        } else {
+            modalWeight.style.display = 'none';
+        }
+
+        // Калории
+        if (itemData.calories) {
+            modalCalories.style.display = 'flex';
+            modalCalories.querySelector('.detail-value').textContent = itemData.calories + ' ккал';
+        } else {
+            modalCalories.style.display = 'none';
+        }
+
+        // Устанавливаем данные для кнопки
+        modalButton.setAttribute('data-item-id', itemData.id);
+        modalButton.setAttribute('data-item-name', itemData.name);
+
+        // Показываем модальное окно
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // Блокируем скролл
+    }
+
+    function closeProductModal() {
+        const modal = document.getElementById('productModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = ''; // Восстанавливаем скролл
+    }
+
+    // Обработчики событий для модального окна
+    document.getElementById('closeModal').addEventListener('click', closeProductModal);
+
+    // Закрытие по клику на фон
+    document.getElementById('productModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeProductModal();
+        }
+    });
+
+    // Обработчик для кнопки "В корзину" в модальном окне
+    document.getElementById('modalAddToCart').addEventListener('click', function() {
+        const itemId = this.getAttribute('data-item-id');
+        const itemName = this.getAttribute('data-item-name');
+        
+        addToCart(itemId, itemName);
+        closeProductModal();
+    });
+
+    // Обработчики клика на карточки продуктов
+    document.querySelectorAll('.menu-item-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Проверяем, что клик не по кнопке "+"
+            if (e.target.closest('.add-to-cart-btn')) {
+                return; // Останавливаем обработку, если клик по кнопке
+            }
+
+            // Получаем данные из data-атрибутов
+            const itemData = {
+                id: this.getAttribute('data-item-id'),
+                name: this.getAttribute('data-item-name'),
+                description: this.getAttribute('data-item-description'),
+                weight: this.getAttribute('data-item-weight'),
+                calories: this.getAttribute('data-item-calories'),
+                price: this.getAttribute('data-item-price'),
+                image: this.getAttribute('data-item-image')
+            };
+
+            openProductModal(itemData);
+        });
+    });
+
+    // Закрытие модального окна по Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeProductModal();
+        }
+    });
 });
 </script>
+
+<!-- Модальное окно с подробной информацией о продукте -->
+<div id="productModal" class="product-modal">
+    <div class="product-modal-content">
+        <div class="product-modal-header">
+            <button class="product-modal-close" id="closeModal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="product-modal-body">
+            <div class="product-modal-image-container">
+                <img id="modalProductImage" class="product-modal-image" src="" alt="">
+            </div>
+            
+            <div class="product-modal-info">
+                <h3 id="modalProductName" class="product-modal-title"></h3>
+                <p id="modalProductDescription" class="product-modal-description"></p>
+                
+                <div class="product-modal-details">
+                    <div id="modalProductWeight" class="product-detail-item">
+                        <i class="fas fa-weight-hanging"></i>
+                        <span class="detail-value"></span>
+                    </div>
+                    <div id="modalProductCalories" class="product-detail-item">
+                        <i class="fas fa-fire"></i>
+                        <span class="detail-value"></span>
+                    </div>
+                </div>
+                
+                <div class="product-modal-price">
+                    <span id="modalProductPrice" class="modal-price"></span> ₽
+                </div>
+            </div>
+        </div>
+        
+        <div class="product-modal-footer">
+            <button id="modalAddToCart" class="modal-add-to-cart-btn">
+                <i class="fas fa-shopping-cart me-2"></i>В корзину
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
