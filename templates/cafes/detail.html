@@ -56,29 +56,29 @@
 }
 
 .menu-item-image {
-    height: 200px;
+    height: 150px;
     object-fit: cover;
     width: 100%;
 }
 
 .menu-item-body {
-    padding: 1.5rem;
+    padding: 1rem;
     display: flex;
     flex-direction: column;
-    height: calc(100% - 200px);
+    height: calc(100% - 150px);
 }
 
 .menu-item-name {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.4rem;
     color: #2c3e50;
 }
 
 .menu-item-description {
     color: #6c757d;
-    font-size: 0.9rem;
-    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.8rem;
     flex-grow: 1;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .menu-item-price {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: #FF6B35;
 }
@@ -99,9 +99,10 @@
     background: linear-gradient(45deg, #FF6B35, #f39c12);
     border: none;
     color: white;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
     font-weight: 600;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
 }
 
@@ -254,7 +255,7 @@
                         
                         <div class="row">
                             {% for item in items %}
-                                <div class="col-lg-4 col-md-6 mb-4">
+                                <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
                                     <div class="card menu-item-card">
                                         {% if item.image %}
                                             <img src="{{ item.image.url }}" class="menu-item-image" alt="{{ item.name }}">

@@ -143,6 +143,24 @@ main {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Стили для валидации полей */
+.form-select.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    animation: shake 0.5s;
+}
+
+.form-select.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
 </style>
 
 <div class="cart-container">
@@ -392,16 +410,36 @@ function proceedToCheckout() {
 
 function payWithTelegram() {
     // Проверяем выбор рабочего места
-    const workspaceNumber = document.getElementById('workspaceNumber').value;
-    if (!workspaceNumber) {
-        alert('Пожалуйста, выберите номер рабочего места для доставки заказа');
-        document.getElementById('workspaceNumber').focus();
+    const workspaceSelect = document.getElementById('workspace-select');
+    const workspaceNumber = workspaceSelect ? workspaceSelect.value : '';
+    
+    console.log('Выбранное место:', workspaceNumber); // Для отладки
+    
+    if (!workspaceNumber || workspaceNumber === '' || workspaceSelect.selectedIndex === 0) {
+        // Показываем уведомление внутри приложения
+        showNotification('Пожалуйста, выберите номер рабочего места для доставки заказа', 'error');
+        
+        // Подсвечиваем поле красным
+        if (workspaceSelect) {
+            workspaceSelect.classList.add('is-invalid');
+            workspaceSelect.focus();
+            
+            // Убираем подсветку через 5 секунд
+            setTimeout(() => {
+                workspaceSelect.classList.remove('is-invalid');
+            }, 5000);
+        }
         return;
+    }
+    
+    // Убираем подсветку ошибки если поле заполнено правильно
+    if (workspaceSelect) {
+        workspaceSelect.classList.remove('is-invalid');
     }
     
     // Проверяем, что мы в Telegram Web App
     if (!window.Telegram || !window.Telegram.WebApp) {
-        alert('Эта функция доступна только в Telegram Web App');
+        showNotification('Эта функция доступна только в Telegram Web App', 'error');
         return;
     }
     
@@ -580,6 +618,23 @@ function payWithTelegram() {
 function proceedToCheckout() {
     alert('Обычная система оплаты пока не реализована. Используйте оплату через Telegram!');
 }
+
+// Добавляем обработчик для поля выбора рабочего места
+document.addEventListener('DOMContentLoaded', function() {
+    const workspaceSelect = document.getElementById('workspace-select');
+    
+    if (workspaceSelect) {
+        workspaceSelect.addEventListener('change', function() {
+            // Убираем классы валидации при изменении
+            this.classList.remove('is-invalid', 'is-valid');
+            
+            // Если выбрано корректное значение, добавляем класс валидности
+            if (this.value && this.value !== '' && this.selectedIndex > 0) {
+                this.classList.add('is-valid');
+            }
+        });
+    }
+});
 </script>
 
 <!-- Скрытое поле для CSRF токена -->
