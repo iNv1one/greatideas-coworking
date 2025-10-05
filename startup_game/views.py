@@ -179,7 +179,7 @@ def game_play(request):
             'daily_profit': daily_profit,
             'hire_cost': hire_cost,
         }
-        return render(request, 'startup_game/game_unified.html', context)
+        return render(request, 'startup_game/play_clean.html', context)
     
     except Exception as e:
         # В случае любой ошибки показываем простую страницу создания игры
@@ -193,7 +193,7 @@ def game_play(request):
             'hire_cost': 0,
             'error_message': str(e) if request.user.is_staff else None,  # Показываем ошибку только админам
         }
-        return render(request, 'startup_game/game_unified.html', context)
+        return render(request, 'startup_game/play_clean.html', context)
 
 
 @login_required

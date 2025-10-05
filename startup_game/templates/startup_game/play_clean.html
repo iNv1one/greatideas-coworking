@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Startup Game - Играть{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'startup_game/css/game.css' %}">
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+.game-screen-play {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('{% static "startup_game/images/bg1.PNG" %}');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    display: flex;
+    flex-direction: column;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'startup_game/js/game.js' %}"></script>
+
+{% if session_data %}
+{{ session_data|json_script:"game-session-data" }}
+<script type="text/javascript">
+// Передаем данные игры из Django в JavaScript
+const sessionData = JSON.parse(document.getElementById('game-session-data').textContent);
+window.gameTimerData = {};
+window.gameTimerData.gameTime = parseInt(sessionData.game_time || 480);
+window.gameTimerData.gameDay = parseInt(sessionData.day || 1);
+window.gameTimerData.currentMoney = parseInt(sessionData.money || 500);
+window.gameTimerData.gamePaused = sessionData.game_paused || false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    window.gameData = {
+        money: parseInt(sessionData.money || 500),
+        reputation: parseInt(sessionData.reputation || 0),
+        employees: parseInt(sessionData.employees || 1),
+        customers: parseInt(sessionData.customers || 0),
+        day: parseInt(sessionData.day || 1),
+        level: parseInt(sessionData.level || 1)
+    };
+    
+    // Обновляем интерфейс
+    if (typeof updateGameData === 'function') {
+        updateGameData(window.gameData);
+    }
+});
+</script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Игровой таймер -->
+{% include 'startup_game/components/game_timer.html' %}
+
+<div class="game-screen-play">
+    <div class="container-fluid py-4">
+        <!-- Заголовок игры -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="game-header text-center">
+                    <h1 class="display-4 mb-2 text-white">{{ session.company_name }}</h1>
+                    <p class="lead text-white">
+                        {% if session.get_industry_display %}{{ session.get_industry_display }}{% else %}Стартап{% endif %} • 
+                        День {{ session.day }} • 
+                        Уровень {{ session.level }}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Статистика игры -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="stats-container">
+                    <div class="row g-3 justify-content-center">
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card money">
+                                <div class="stat-icon">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="money">${{ session.money }}</div>
+                                    <div class="stat-label">Деньги</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card reputation">
+                                <div class="stat-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="reputation">{{ session.reputation }}</div>
+                                    <div class="stat-label">Репутация</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card employees">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="employees">{{ session.employees }}</div>
+                                    <div class="stat-label">Сотрудники</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="stat-card customers">
+                                <div class="stat-icon">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                                <div class="stat-info">
+                                    <div class="stat-value" id="customers">{{ session.customers }}</div>
+                                    <div class="stat-label">Клиенты</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Информация о текущем состоянии -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card bg-dark text-white" style="background-color: rgba(0,0,0,0.7) !important;">
+                    <div class="card-body text-center">
+                        <h4>Текущая ситуация</h4>
+                        <p class="mb-3">
+                            Ваша компания <strong>{{ session.company_name }}</strong> работает в сфере 
+                            <strong>{% if session.get_industry_display %}{{ session.get_industry_display }}{% else %}Стартап{% endif %}</strong>.
+                        </p>
+                        
+                        {% if session.day == 1 %}
+                        <div class="alert alert-info">
+                            <h5>🎉 Добро пожаловать!</h5>
+                            <p class="mb-0">
+                                Это ваш первый день в качестве предпринимателя. 
+                                У вас есть ${{ session.money }} стартового капитала. 
+                                Каждый день тратится $50 на расходы. 
+                                Время идет быстро - 1 день = 30 секунд!
+                            </p>
+                        </div>
+                        {% else %}
+                        <div class="daily-summary">
+                            <p><strong>Доходы:</strong> ${{ daily_income }} ({{ session.customers }} клиентов × $10)</p>
+                            <p><strong>Расходы:</strong> ${{ daily_expenses }} ({{ session.employees }} сотрудников × $50)</p>
+                            <p class="{% if daily_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                <strong>Прибыль:</strong> ${{ daily_profit }}
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
