@@ -274,6 +274,115 @@
         flex-direction: column;
         gap: 1rem;
     }
+    
+    /* Мобильная адаптация модального окна рабочего времени */
+    .working-hours-content {
+        margin: 1rem;
+        max-width: 90vw;
+    }
+}
+
+/* Стили для модального окна рабочего времени */
+.working-hours-modal {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.3s ease;
+}
+
+.working-hours-content {
+    background: white;
+    border-radius: 20px;
+    max-width: 400px;
+    width: 100%;
+    position: relative;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.working-hours-header {
+    padding: 1.5rem 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.working-hours-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.3rem;
+}
+
+.working-hours-close {
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    color: #666;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.working-hours-close:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.working-hours-body {
+    padding: 1rem 1.5rem;
+    text-align: center;
+}
+
+.working-hours-body p {
+    margin: 0.5rem 0;
+}
+
+.hours-info {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #FF6B35;
+    margin: 1rem 0;
+}
+
+.current-time {
+    font-size: 1.1rem;
+    color: #666;
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-radius: 10px;
+    margin: 1rem 0;
+}
+
+.notice {
+    color: #856404;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    padding: 1rem;
+    border-radius: 10px;
+    font-size: 0.95rem;
+}
+
+.working-hours-footer {
+    padding: 0 1.5rem 1.5rem;
+}
+
+.working-hours-footer .btn {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 15px;
+    font-weight: 600;
 }
 
 .menu-item-name {
@@ -450,9 +559,15 @@
                 <i class="fas fa-utensils me-3"></i>
                 {{ cafe.name }} - Меню
             </h1>
-            <p class="lead mb-4">
+            <p class="lead mb-3">
                 Кафе Зацепи находится прямо под коворкингом, что сделает вашу работу ещё удобнее. Просто совершите заказ и его доставят прямо к вашему рабочему месту
             </p>
+            <div class="working-hours-info mb-4">
+                <div class="d-flex align-items-center justify-content-center text-white">
+                    <i class="fas fa-clock me-2"></i>
+                    <span><strong>Заказы принимаются с 10:00 до 18:45 (МСК)</strong></span>
+                </div>
+            </div>
         </div>
     </div>
 </section>
@@ -617,6 +732,75 @@
 <script>
 // Данные о позициях меню (передаем из Django)
 const menuItemsData = JSON.parse('{{ menu_items_json|escapejs }}');
+
+// Функция проверки рабочего времени (10:00-18:45 МСК)
+function isWorkingHours() {
+    const now = new Date();
+    // Преобразуем в московское время (UTC+3)
+    const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+    const hours = moscowTime.getHours();
+    const minutes = moscowTime.getMinutes();
+    
+    // Рабочее время: 10:00-18:45
+    const startHour = 10;
+    const endHour = 18;
+    const endMinute = 45;
+    
+    if (hours < startHour) return false;
+    if (hours > endHour) return false;
+    if (hours === endHour && minutes > endMinute) return false;
+    
+    return true;
+}
+
+// Функция получения текущего московского времени для отображения
+function getMoscowTimeString() {
+    const now = new Date();
+    const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+    return moscowTime.toLocaleTimeString('ru-RU', { 
+        timeZone: 'Europe/Moscow',
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+}
+
+// Функция показа попапа о рабочем времени
+function showWorkingHoursModal() {
+    const modal = document.createElement('div');
+    modal.className = 'working-hours-modal';
+    modal.innerHTML = `
+        <div class="working-hours-content">
+            <div class="working-hours-header">
+                <h3><i class="fas fa-clock me-2"></i>Время работы</h3>
+                <button class="working-hours-close" onclick="this.closest('.working-hours-modal').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="working-hours-body">
+                <p><strong>Заказы принимаются:</strong></p>
+                <p class="hours-info">с 10:00 до 18:45 (МСК)</p>
+                <p class="current-time">Сейчас: ${getMoscowTimeString()}</p>
+                <p class="notice">В данный момент заказы не принимаются, но вы можете ознакомиться с ассортиментом.</p>
+            </div>
+            <div class="working-hours-footer">
+                <button class="btn btn-primary" onclick="this.closest('.working-hours-modal').remove()">
+                    Понятно
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.style.overflow = 'hidden';
+    
+    // Закрытие по клику на фон
+    modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+            this.remove();
+            document.body.style.overflow = '';
+        }
+    });
+}
 
 // Функции для работы с корзиной и bottom sheet
 function addToCart(itemId, itemName) {
@@ -835,6 +1019,14 @@ function addItemToCart(itemId, variantId, addonIds, quantity) {
 
 // Инициализация после загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
+    // Проверяем рабочее время и показываем попап если нужно
+    if (!isWorkingHours()) {
+        // Показываем попап через небольшую задержку для лучшего UX
+        setTimeout(() => {
+            showWorkingHoursModal();
+        }, 1000);
+    }
+
     // Обработчики для кнопок "В корзину"
     document.querySelectorAll('.add-to-cart-btn').forEach(button => {
         button.addEventListener('click', function() {

@@ -4,6 +4,7 @@ API views для работы с платежами
 import json
 import logging
 import asyncio
+from datetime import datetime, timezone, timedelta
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
@@ -14,6 +15,26 @@ from orders.models import Order
 from orders.telegram_payments import TelegramPaymentService
 
 logger = logging.getLogger(__name__)
+
+
+def is_working_hours():
+    """Проверка рабочего времени (10:00-18:45 МСК)"""
+    # Получаем текущее время в московском часовом поясе
+    moscow_tz = timezone(timedelta(hours=3))
+    moscow_time = datetime.now(moscow_tz)
+    
+    hour = moscow_time.hour
+    minute = moscow_time.minute
+    
+    # Рабочее время: 10:00-18:45
+    if hour < 10:
+        return False
+    if hour > 18:
+        return False
+    if hour == 18 and minute > 45:
+        return False
+    
+    return True
 
 
 def send_invoice_sync(telegram_id, title, description, payload, prices, photo_url=None, need_shipping=False):
@@ -64,6 +85,15 @@ def create_payment(request):
     }
     """
     try:
+        # Проверяем рабочее время
+        if not is_working_hours():
+            moscow_tz = timezone(timedelta(hours=3))
+            current_time = datetime.now(moscow_tz).strftime('%H:%M')
+            return JsonResponse({
+                'success': False,
+                'error': f'К сожалению, заказы принимаются только с 10:00 до 18:45 (МСК). Сейчас: {current_time}. Пожалуйста, попробуйте оформить заказ в рабочее время.'
+            }, status=400)
+
         data = json.loads(request.body)
         
         # Проверяем обязательные поля

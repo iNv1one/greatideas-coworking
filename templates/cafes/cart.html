@@ -328,6 +328,37 @@ main {
 </div>
 
 <script>
+// Функция проверки рабочего времени (10:00-18:45 МСК)
+function isWorkingHours() {
+    const now = new Date();
+    // Преобразуем в московское время (UTC+3)
+    const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+    const hours = moscowTime.getHours();
+    const minutes = moscowTime.getMinutes();
+    
+    // Рабочее время: 10:00-18:45
+    const startHour = 10;
+    const endHour = 18;
+    const endMinute = 45;
+    
+    if (hours < startHour) return false;
+    if (hours > endHour) return false;
+    if (hours === endHour && minutes > endMinute) return false;
+    
+    return true;
+}
+
+// Функция получения текущего московского времени для отображения
+function getMoscowTimeString() {
+    const now = new Date();
+    const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
+    return moscowTime.toLocaleTimeString('ru-RU', { 
+        timeZone: 'Europe/Moscow',
+        hour: '2-digit', 
+        minute: '2-digit'
+    });
+}
+
 // Функции для управления корзиной
 function updateQuantity(cartKey, newQuantity) {
     if (newQuantity < 1) {
@@ -565,6 +596,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Функция оплаты через Telegram
 function payWithTelegram() {
+    // Проверяем рабочее время
+    if (!isWorkingHours()) {
+        alert(`К сожалению, заказы принимаются только с 10:00 до 18:45 (МСК).\n\nСейчас: ${getMoscowTimeString()}\n\nПожалуйста, попробуйте оформить заказ в рабочее время.`);
+        return;
+    }
+
     // Проверяем выбор рабочего места
     const workspaceSelect = document.getElementById('workspaceNumber');
     const workspaceNumber = workspaceSelect ? workspaceSelect.value : '';
