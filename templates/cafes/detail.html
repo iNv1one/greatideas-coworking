@@ -68,6 +68,32 @@
     height: calc(100% - 150px);
 }
 
+/* Адаптация для мобильных устройств */
+@media (max-width: 768px) {
+    .menu-item-image {
+        height: 120px;
+    }
+    
+    .menu-item-body {
+        padding: 0.75rem;
+        height: calc(100% - 120px);
+    }
+    
+    .menu-item-name {
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }
+    
+    .menu-item-description {
+        font-size: 0.8rem;
+        margin-bottom: 0.6rem;
+    }
+    
+    .menu-item-card {
+        border-radius: 15px;
+    }
+}
+
 .menu-item-name {
     font-size: 1rem;
     font-weight: 600;
@@ -255,7 +281,7 @@
                         
                         <div class="row">
                             {% for item in items %}
-                                <div class="col-lg-6 col-md-6 col-sm-12 mb-3">
+                                <div class="col-lg-6 col-md-6 col-6 mb-3">
                                     <div class="card menu-item-card">
                                         {% if item.image %}
                                             <img src="{{ item.image.url }}" class="menu-item-image" alt="{{ item.name }}">

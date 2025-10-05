@@ -410,7 +410,7 @@ function proceedToCheckout() {
 
 function payWithTelegram() {
     // Проверяем выбор рабочего места
-    const workspaceSelect = document.getElementById('workspace-select');
+    const workspaceSelect = document.getElementById('workspaceNumber');
     const workspaceNumber = workspaceSelect ? workspaceSelect.value : '';
     
     console.log('Выбранное место:', workspaceNumber); // Для отладки
@@ -621,7 +621,7 @@ function proceedToCheckout() {
 
 // Добавляем обработчик для поля выбора рабочего места
 document.addEventListener('DOMContentLoaded', function() {
-    const workspaceSelect = document.getElementById('workspace-select');
+    const workspaceSelect = document.getElementById('workspaceNumber');
     
     if (workspaceSelect) {
         workspaceSelect.addEventListener('change', function() {
