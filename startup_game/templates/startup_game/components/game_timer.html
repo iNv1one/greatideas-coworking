@@ -167,7 +167,7 @@ function startGameTimer() {
     setInterval(() => {
         if (gamePaused) return; // Не обновляем время если игра на паузе
         
-        currentGameTime += 48; // 48 минут каждую секунду = 30 секунд на день (1440/30 = 48)
+        currentGameTime += 24; // 24 минуты каждую секунду = 1 минута на день (1440/60 = 24)
         
         // Если прошёл день (1440 минут = 24 часа)
         if (currentGameTime >= 1440) {
@@ -185,7 +185,7 @@ function startGameTimer() {
         updateGameTimer(currentGameTime, currentGameDay);
         
         // Синхронизируем с сервером каждые 10 секунд
-        if (Math.floor(currentGameTime / 48) % 10 === 0) {
+        if (Math.floor(currentGameTime / 24) % 10 === 0) {
             syncTimeWithServer();
         }
     }, 1000); // Каждую секунду

@@ -24,6 +24,78 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* Маленькие элементы статистики */
+.stats-sidebar {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.stat-item-small {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.stat-icon-small {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 12px;
+}
+
+.stat-item-small.money .stat-icon-small {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+    color: white;
+}
+
+.stat-item-small.reputation .stat-icon-small {
+    background: linear-gradient(135deg, #FF9800, #f57c00);
+    color: white;
+}
+
+.stat-item-small.employees .stat-icon-small {
+    background: linear-gradient(135deg, #2196F3, #1976d2);
+    color: white;
+}
+
+.stat-item-small.customers .stat-icon-small {
+    background: linear-gradient(135deg, #9C27B0, #7b1fa2);
+    color: white;
+}
+
+.stat-info-small {
+    flex: 1;
+}
+
+.stat-value-small {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    line-height: 1.2;
+}
+
+.stat-label-small {
+    font-size: 10px;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.main-game-area {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 400px;
+}
 </style>
 {% endblock %}
 
@@ -80,91 +152,58 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
 
-        <!-- Статистика игры -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="stats-container">
-                    <div class="row g-3 justify-content-center">
-                        <div class="col-6 col-md-3">
-                            <div class="stat-card money">
-                                <div class="stat-icon">
-                                    <i class="fas fa-dollar-sign"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <div class="stat-value" id="money">${{ session.money }}</div>
-                                    <div class="stat-label">Деньги</div>
-                                </div>
-                            </div>
+        <!-- Основной контент -->        
+        <div class="row">
+            <!-- Левый столбец - Статистика -->
+            <div class="col-md-3">
+                <div class="stats-sidebar">
+                    <div class="stat-item-small money mb-2">
+                        <div class="stat-icon-small">
+                            <i class="fas fa-dollar-sign"></i>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="stat-card reputation">
-                                <div class="stat-icon">
-                                    <i class="fas fa-star"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <div class="stat-value" id="reputation">{{ session.reputation }}</div>
-                                    <div class="stat-label">Репутация</div>
-                                </div>
-                            </div>
+                        <div class="stat-info-small">
+                            <div class="stat-value-small" id="money">${{ session.money }}</div>
+                            <div class="stat-label-small">Деньги</div>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="stat-card employees">
-                                <div class="stat-icon">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <div class="stat-value" id="employees">{{ session.employees }}</div>
-                                    <div class="stat-label">Сотрудники</div>
-                                </div>
-                            </div>
+                    </div>
+                    
+                    <div class="stat-item-small reputation mb-2">
+                        <div class="stat-icon-small">
+                            <i class="fas fa-star"></i>
                         </div>
-                        <div class="col-6 col-md-3">
-                            <div class="stat-card customers">
-                                <div class="stat-icon">
-                                    <i class="fas fa-user-friends"></i>
-                                </div>
-                                <div class="stat-info">
-                                    <div class="stat-value" id="customers">{{ session.customers }}</div>
-                                    <div class="stat-label">Клиенты</div>
-                                </div>
-                            </div>
+                        <div class="stat-info-small">
+                            <div class="stat-value-small" id="reputation">{{ session.reputation }}</div>
+                            <div class="stat-label-small">Репутация</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item-small employees mb-2">
+                        <div class="stat-icon-small">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info-small">
+                            <div class="stat-value-small" id="employees">{{ session.employees }}</div>
+                            <div class="stat-label-small">Сотрудники</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-item-small customers mb-2">
+                        <div class="stat-icon-small">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <div class="stat-info-small">
+                            <div class="stat-value-small" id="customers">{{ session.customers }}</div>
+                            <div class="stat-label-small">Клиенты</div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Информация о текущем состоянии -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card bg-dark text-white" style="background-color: rgba(0,0,0,0.7) !important;">
-                    <div class="card-body text-center">
-                        <h4>Текущая ситуация</h4>
-                        <p class="mb-3">
-                            Ваша компания <strong>{{ session.company_name }}</strong> работает в сфере 
-                            <strong>{% if session.get_industry_display %}{{ session.get_industry_display }}{% else %}Стартап{% endif %}</strong>.
-                        </p>
-                        
-                        {% if session.day == 1 %}
-                        <div class="alert alert-info">
-                            <h5>🎉 Добро пожаловать!</h5>
-                            <p class="mb-0">
-                                Это ваш первый день в качестве предпринимателя. 
-                                У вас есть ${{ session.money }} стартового капитала. 
-                                Каждый день тратится $50 на расходы. 
-                                Время идет быстро - 1 день = 30 секунд!
-                            </p>
-                        </div>
-                        {% else %}
-                        <div class="daily-summary">
-                            <p><strong>Доходы:</strong> ${{ daily_income }} ({{ session.customers }} клиентов × $10)</p>
-                            <p><strong>Расходы:</strong> ${{ daily_expenses }} ({{ session.employees }} сотрудников × $50)</p>
-                            <p class="{% if daily_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
-                                <strong>Прибыль:</strong> ${{ daily_profit }}
-                            </p>
-                        </div>
-                        {% endif %}
-                    </div>
+            
+            <!-- Правый столбец - Основная область -->
+            <div class="col-md-9">
+                <!-- Здесь будет основной игровой контент -->
+                <div class="main-game-area">
+                    <p class="text-white text-center">Игровая область</p>
                 </div>
             </div>
         </div>
