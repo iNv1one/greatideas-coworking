@@ -4,8 +4,8 @@ from . import views
 app_name = 'startup_game'
 
 urlpatterns = [
-    path('', views.game_home, name='home'),
-    path('game/', views.game_play, name='game'),  # Основная игровая страница
+    path('', views.game_play, name='game'),  # Основная игровая страница /game/
+    path('home/', views.game_home, name='home'),
     path('play/', views.game_play, name='play'),  # Для совместимости
     path('company-name/', views.company_name, name='company_name'),
     path('industry-select/', views.industry_select, name='industry_select'),

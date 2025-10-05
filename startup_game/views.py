@@ -109,20 +109,18 @@ def game_play(request):
                 
                 # Добавляем новые поля если они есть в модели
                 try:
-                    from django.db import connection
-                    with connection.cursor() as cursor:
-                        cursor.execute("PRAGMA table_info(startup_game_gamesession)")
-                        columns = [row[1] for row in cursor.fetchall()]
-                        
-                    if 'industry' in columns:
+                    # Проверяем наличие полей через модель Django
+                    model_fields = [field.name for field in GameSession._meta.get_fields()]
+                    
+                    if 'industry' in model_fields:
                         defaults['industry'] = industry
-                    if 'game_time' in columns:
+                    if 'game_time' in model_fields:
                         defaults['game_time'] = 480
-                    if 'game_paused' in columns:
+                    if 'game_paused' in model_fields:
                         defaults['game_paused'] = False
-                    if 'last_event_day' in columns:
+                    if 'last_event_day' in model_fields:
                         defaults['last_event_day'] = 0
-                    if 'dice_roll' in columns:
+                    if 'dice_roll' in model_fields:
                         defaults['dice_roll'] = 1
                 except:
                     pass  # Игнорируем ошибки с базой данных
