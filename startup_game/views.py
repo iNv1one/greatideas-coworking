@@ -79,36 +79,78 @@ def industry_select(request):
 @login_required
 def game_play(request):
     """Основная игровая страница"""
-    # Получаем или создаем игровую сессию
-    session, created = GameSession.objects.get_or_create(
-        user=request.user,
-        is_active=True,
-        defaults={
-            'company_name': f"{request.user.username}'s Startup",
-            'money': 1000,
-            'reputation': 0,
-            'employees': 1,
-            'customers': 0,
-            'day': 1,
-            'level': 1,
-        }
-    )
+    # Проверяем есть ли активная сессия
+    try:
+        session = GameSession.objects.get(user=request.user, is_active=True)
+    except GameSession.DoesNotExist:
+        # Если нет активной сессии, показываем этапы создания компании
+        session = None
     
-    # Расчеты для отображения
-    daily_income = session.customers * 10
-    daily_expenses = session.employees * 50
-    daily_profit = daily_income - daily_expenses
-    hire_cost = 200 + (session.employees * 50)
+    # Если это POST запрос для создания новой компании
+    if request.method == 'POST':
+        if not session:
+            company_name = request.POST.get('company_name', '').strip()
+            industry = request.POST.get('industry', '').strip()
+            
+            if company_name and industry:
+                # Завершаем все старые сессии
+                GameSession.objects.filter(user=request.user, is_active=True).update(is_active=False)
+                
+                # Создаем новую сессию с базовыми полями
+                defaults = {
+                    'company_name': company_name,
+                    'money': 500,
+                    'reputation': 0,
+                    'employees': 1,
+                    'customers': 0,
+                    'day': 1,
+                    'level': 1,
+                }
+                
+                # Добавляем новые поля если они есть в модели
+                try:
+                    from django.db import connection
+                    with connection.cursor() as cursor:
+                        cursor.execute("PRAGMA table_info(startup_game_gamesession)")
+                        columns = [row[1] for row in cursor.fetchall()]
+                        
+                    if 'industry' in columns:
+                        defaults['industry'] = industry
+                    if 'game_time' in columns:
+                        defaults['game_time'] = 480
+                    if 'game_paused' in columns:
+                        defaults['game_paused'] = False
+                    if 'last_event_day' in columns:
+                        defaults['last_event_day'] = 0
+                    if 'dice_roll' in columns:
+                        defaults['dice_roll'] = 1
+                except:
+                    pass  # Игнорируем ошибки с базой данных
+                
+                session = GameSession.objects.create(user=request.user, is_active=True, **defaults)
+                
+                return JsonResponse({'success': True, 'redirect': True})
+    
+    # Расчеты для отображения (только если есть сессия)
+    if session:
+        daily_income = session.customers * 10
+        daily_expenses = session.employees * 50
+        daily_profit = daily_income - daily_expenses
+        hire_cost = 200 + (session.employees * 50)
+        page_title = f'{session.company_name} - Day {session.day}'
+    else:
+        daily_income = daily_expenses = daily_profit = hire_cost = 0
+        page_title = 'Создание стартапа'
     
     context = {
         'session': session,
-        'page_title': f'{session.company_name} - Day {session.day}',
+        'page_title': page_title,
         'daily_income': daily_income,
         'daily_expenses': daily_expenses,
         'daily_profit': daily_profit,
         'hire_cost': hire_cost,
     }
-    return render(request, 'startup_game/play.html', context)
+    return render(request, 'startup_game/game_unified.html', context)
 
 
 @login_required

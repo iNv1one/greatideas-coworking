@@ -28,11 +28,11 @@
                 
                 {% if user.is_authenticated %}
                     <div class="game-actions">
-                        <a href="{% url 'startup_game:play' %}" class="btn btn-success btn-lg me-3">
-                            <i class="fas fa-play me-2"></i>Продолжить игру
+                        <a href="{% url 'startup_game:game' %}" class="btn btn-success btn-lg me-3">
+                            <i class="fas fa-play me-2"></i>Играть
                         </a>
-                        <a href="{% url 'startup_game:company_name' %}" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-plus me-2"></i>Новая игра
+                        <a href="{% url 'startup_game:stats' %}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-chart-bar me-2"></i>Статистика
                         </a>
                     </div>
                 {% else %}

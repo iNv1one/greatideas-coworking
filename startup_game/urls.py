@@ -5,9 +5,10 @@ app_name = 'startup_game'
 
 urlpatterns = [
     path('', views.game_home, name='home'),
+    path('game/', views.game_play, name='game'),  # Основная игровая страница
+    path('play/', views.game_play, name='play'),  # Для совместимости
     path('company-name/', views.company_name, name='company_name'),
     path('industry-select/', views.industry_select, name='industry_select'),
-    path('play/', views.game_play, name='play'),
     path('new-game/', views.new_game, name='new_game'),
     path('stats/', views.game_stats, name='stats'),
     path('api/action/', views.game_action, name='game_action'),

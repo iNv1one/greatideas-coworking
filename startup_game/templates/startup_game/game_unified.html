@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Startup Game{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'startup_game/css/game.css' %}">
+<style>
+.game-stage {
+    display: none;
+}
+.game-stage.active {
+    display: block;
+}
+.stage-indicator {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+.stage-step {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    line-height: 30px;
+    text-align: center;
+    margin: 0 10px;
+    color: white;
+}
+.stage-step.active {
+    background: #007bff;
+}
+.stage-step.completed {
+    background: #28a745;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'startup_game/js/game.js' %}"></script>
+
+{% if session %}
+{{ session|json_script:"game-session-data" }}
+<script type="text/javascript">
+// Передаем данные игры из Django в JavaScript
+const sessionData = JSON.parse(document.getElementById('game-session-data').textContent);
+window.gameTimerData = {};
+window.gameTimerData.gameTime = parseInt(sessionData.game_time || 480);
+window.gameTimerData.gameDay = parseInt(sessionData.day || 1);
+window.gameTimerData.currentMoney = parseInt(sessionData.money || 500);
+window.gameTimerData.gamePaused = sessionData.game_paused || false;
+
+document.addEventListener('DOMContentLoaded', function() {
+    window.gameData = {
+        money: parseInt(sessionData.money || 500),
+        reputation: parseInt(sessionData.reputation || 0),
+        employees: parseInt(sessionData.employees || 1),
+        customers: parseInt(sessionData.customers || 0),
+        day: parseInt(sessionData.day || 1),
+        level: parseInt(sessionData.level || 1)
+    };
+    
+    // Показываем игровой экран сразу
+    showGameStage('gameplay');
+    
+    // Обновляем интерфейс
+    if (typeof updateGameData === 'function') {
+        updateGameData(window.gameData);
+    }
+});
+</script>
+{% else %}
+<script type="text/javascript">
+// Логика пошагового создания компании
+let currentStage = 1;
+let companyData = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    showGameStage('company-name');
+});
+
+function showGameStage(stageId) {
+    // Скрываем все этапы
+    document.querySelectorAll('.game-stage').forEach(stage => {
+        stage.classList.remove('active');
+    });
+    
+    // Показываем нужный этап
+    const targetStage = document.getElementById(stageId);
+    if (targetStage) {
+        targetStage.classList.add('active');
+    }
+    
+    // Обновляем индикатор этапов
+    updateStageIndicator(stageId);
+}
+
+function updateStageIndicator(stageId) {
+    const steps = document.querySelectorAll('.stage-step');
+    steps.forEach((step, index) => {
+        step.classList.remove('active', 'completed');
+        
+        if (stageId === 'company-name' && index === 0) {
+            step.classList.add('active');
+        } else if (stageId === 'industry-select' && index === 1) {
+            step.classList.add('active');
+            if (index === 0) step.classList.add('completed');
+        } else if (stageId === 'gameplay' && index === 2) {
+            step.classList.add('active');
+            if (index < 2) step.classList.add('completed');
+        } else if (
+            (stageId === 'industry-select' && index === 0) ||
+            (stageId === 'gameplay' && index < 2)
+        ) {
+            step.classList.add('completed');
+        }
+    });
+}
+
+function nextStage(fromStage) {
+    if (fromStage === 'company-name') {
+        const companyName = document.getElementById('company_name').value.trim();
+        if (!companyName) {
+            alert('Пожалуйста, введите название компании');
+            return;
+        }
+        companyData.company_name = companyName;
+        showGameStage('industry-select');
+    } else if (fromStage === 'industry-select') {
+        const industry = document.querySelector('input[name="industry"]:checked');
+        if (!industry) {
+            alert('Пожалуйста, выберите отрасль');
+            return;
+        }
+        companyData.industry = industry.value;
+        createCompany();
+    }
+}
+
+function createCompany() {
+    // Отправляем данные на сервер
+    fetch('{% url "startup_game:play" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: new URLSearchParams(companyData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Перезагружаем страницу для отображения игры
+        } else {
+            alert('Ошибка создания компании');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка создания компании');
+    });
+}
+</script>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="game-screen-play">
+    <div class="container-fluid py-4">
+        
+        {% if not session %}
+        <!-- Индикатор этапов создания компании -->
+        <div class="stage-indicator text-center">
+            <div class="stage-step">1</div>
+            <div class="stage-step">2</div>
+            <div class="stage-step">3</div>
+            <div class="mt-2">
+                <small class="text-white">Название → Отрасль → Игра</small>
+            </div>
+        </div>
+        
+        <!-- Этап 1: Выбор названия компании -->
+        <div id="company-name" class="game-stage">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card bg-dark text-white">
+                        <div class="card-header text-center">
+                            <h3>Создание стартапа</h3>
+                            <p class="mb-0">Шаг 1: Название компании</p>
+                        </div>
+                        <div class="card-body">
+                            {% csrf_token %}
+                            <div class="form-group mb-3">
+                                <label for="company_name" class="form-label">Название вашей компании:</label>
+                                <input type="text" class="form-control" id="company_name" 
+                                       name="company_name" placeholder="Введите название..." 
+                                       value="{{ user.username }}'s Startup" maxlength="100" required>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-lg w-100" 
+                                    onclick="nextStage('company-name')">
+                                Продолжить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Этап 2: Выбор отрасли -->
+        <div id="industry-select" class="game-stage">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <div class="card bg-dark text-white">
+                        <div class="card-header text-center">
+                            <h3>Создание стартапа</h3>
+                            <p class="mb-0">Шаг 2: Выбор отрасли</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                                        <input type="radio" name="industry" value="IT" class="d-none">
+                                        <i class="fas fa-laptop-code fa-3x mb-2"></i>
+                                        <h5>IT</h5>
+                                        <small>Информационные технологии</small>
+                                    </label>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                                        <input type="radio" name="industry" value="FOOD" class="d-none">
+                                        <i class="fas fa-utensils fa-3x mb-2"></i>
+                                        <h5>Еда</h5>
+                                        <small>Рестораны и доставка</small>
+                                    </label>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                                        <input type="radio" name="industry" value="RETAIL" class="d-none">
+                                        <i class="fas fa-shopping-cart fa-3x mb-2"></i>
+                                        <h5>Торговля</h5>
+                                        <small>Розничная торговля</small>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                                        <input type="radio" name="industry" value="HEALTH" class="d-none">
+                                        <i class="fas fa-heartbeat fa-3x mb-2"></i>
+                                        <h5>Здравоохранение</h5>
+                                        <small>Медицина и фитнес</small>
+                                    </label>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column justify-content-center">
+                                        <input type="radio" name="industry" value="EDUCATION" class="d-none">
+                                        <i class="fas fa-graduation-cap fa-3x mb-2"></i>
+                                        <h5>Образование</h5>
+                                        <small>Обучение и курсы</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-success btn-lg w-100 mt-3" 
+                                    onclick="nextStage('industry-select')">
+                                Начать игру!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- Игровой таймер -->
+        {% include 'startup_game/components/game_timer.html' %}
+        
+        <!-- Этап 3: Игровой процесс -->
+        <div id="gameplay" class="game-stage active">
+            <!-- Заголовок игры -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="game-header text-center">
+                        <h1 class="display-4 mb-2">{{ session.company_name }}</h1>
+                        <p class="lead">{{ session.get_industry_display }} • День {{ session.day }} • Уровень {{ session.level }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Основная игровая панель -->
+            <div class="row">
+                <!-- Левая колонка - Статистика -->
+                <div class="col-lg-3 mb-4">
+                    <div class="game-stats-panel">
+                        <h4 class="mb-3">Статистика</h4>
+                        
+                        <div class="stat-item">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Деньги</div>
+                                <div class="stat-value" id="money-display">${{ session.money }}</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-icon">⭐</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Репутация</div>
+                                <div class="stat-value" id="reputation-display">{{ session.reputation }}</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Сотрудники</div>
+                                <div class="stat-value" id="employees-display">{{ session.employees }}</div>
+                            </div>
+                        </div>
+
+                        <div class="stat-item">
+                            <div class="stat-icon">👤</div>
+                            <div class="stat-info">
+                                <div class="stat-label">Клиенты</div>
+                                <div class="stat-value" id="customers-display">{{ session.customers }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Центральная колонка - Основной контент -->
+                <div class="col-lg-6 mb-4">
+                    <div class="game-main-panel">
+                        <div class="current-situation">
+                            <h4>Текущая ситуация</h4>
+                            <div class="situation-content">
+                                <p class="mb-3">
+                                    Ваша компания <strong>{{ session.company_name }}</strong> работает в сфере 
+                                    <strong>{{ session.get_industry_display }}</strong>.
+                                </p>
+                                
+                                {% if session.day == 1 %}
+                                <div class="alert alert-info">
+                                    <h5>🎉 Добро пожаловать!</h5>
+                                    <p class="mb-0">
+                                        Это ваш первый день в качестве предпринимателя. 
+                                        У вас есть ${{ session.money }} стартового капитала. 
+                                        Каждый день тратится $50 на расходы. 
+                                        Время идет быстро - 1 день = 30 секунд!
+                                    </p>
+                                </div>
+                                {% else %}
+                                <div class="daily-summary">
+                                    <p><strong>Доходы:</strong> ${{ daily_income }} ({{ session.customers }} клиентов × $10)</p>
+                                    <p><strong>Расходы:</strong> ${{ daily_expenses }} ({{ session.employees }} сотрудников × $50)</p>
+                                    <p class="{% if daily_profit >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        <strong>Прибыль:</strong> ${{ daily_profit }}
+                                    </p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Правая колонка - Действия -->
+                <div class="col-lg-3 mb-4">
+                    <div class="game-actions-panel">
+                        <h4 class="mb-3">Действия</h4>
+                        
+                        <button class="btn btn-outline-primary btn-block mb-2" onclick="gameAction('hire_employee')">
+                            👥 Нанять сотрудника ($100)
+                        </button>
+                        
+                        <button class="btn btn-outline-success btn-block mb-2" onclick="gameAction('marketing')">
+                            📢 Реклама ($50)
+                        </button>
+                        
+                        <button class="btn btn-outline-info btn-block mb-2" onclick="gameAction('research')">
+                            🔬 Исследования ($75)
+                        </button>
+                        
+                        <button class="btn btn-outline-warning btn-block mb-2" onclick="gameAction('upgrade')">
+                            ⚡ Улучшения ($200)
+                        </button>
+                        
+                        <hr>
+                        
+                        <button class="btn btn-danger btn-block" onclick="confirmNewGame()">
+                            🔄 Новая игра
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+    </div>
+</div>
+
+<style>
+/* Стили для радиокнопок отраслей */
+input[name="industry"]:checked + .btn-outline-primary {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+</style>
+{% endblock %}
