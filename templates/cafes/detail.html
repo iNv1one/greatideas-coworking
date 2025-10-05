@@ -735,11 +735,11 @@ const menuItemsData = JSON.parse('{{ menu_items_json|escapejs }}');
 
 // Функция проверки рабочего времени (10:00-18:45 МСК)
 function isWorkingHours() {
-    const now = new Date();
-    // Преобразуем в московское время (UTC+3)
-    const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-    const hours = moscowTime.getHours();
-    const minutes = moscowTime.getMinutes();
+    // Получаем московское время напрямую
+    const moscowTime = new Date().toLocaleString('en-US', { timeZone: 'Europe/Moscow' });
+    const moscowDate = new Date(moscowTime);
+    const hours = moscowDate.getHours();
+    const minutes = moscowDate.getMinutes();
     
     // Рабочее время: 10:00-18:45
     const startHour = 10;
@@ -755,9 +755,7 @@ function isWorkingHours() {
 
 // Функция получения текущего московского времени для отображения
 function getMoscowTimeString() {
-    const now = new Date();
-    const moscowTime = new Date(now.getTime() + (3 * 60 * 60 * 1000));
-    return moscowTime.toLocaleTimeString('ru-RU', { 
+    return new Date().toLocaleTimeString('ru-RU', { 
         timeZone: 'Europe/Moscow',
         hour: '2-digit', 
         minute: '2-digit'
