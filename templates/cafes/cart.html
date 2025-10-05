@@ -626,7 +626,7 @@ function payWithTelegram() {
             delivery_type: 'pickup',
             customer_name: telegramUser.first_name + ' ' + (telegramUser.last_name || ''),
             customer_phone: '',  // Telegram не всегда предоставляет телефон
-            workspace_number: workspaceNumber,
+            workspace_number: parseInt(workspaceNumber),
             comment: 'Рабочее место: ' + workspaceNumber
         })
     })
