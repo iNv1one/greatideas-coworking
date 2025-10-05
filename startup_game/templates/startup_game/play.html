@@ -9,16 +9,25 @@
 
 {% block extra_js %}
 <script src="{% static 'startup_game/js/game.js' %}"></script>
+
+{{ session|json_script:"game-session-data" }}
 <script type="text/javascript">
 // Передаем данные игры из Django в JavaScript
+const sessionData = JSON.parse(document.getElementById('game-session-data').textContent);
+window.gameTimerData = {};
+window.gameTimerData.gameTime = parseInt(sessionData.game_time || 480);
+window.gameTimerData.gameDay = parseInt(sessionData.day || 1);
+window.gameTimerData.currentMoney = parseInt(sessionData.money || 500);
+window.gameTimerData.gamePaused = sessionData.game_paused || false;
+
 document.addEventListener('DOMContentLoaded', function() {
     window.gameData = {
-        money: parseInt('{{ session.money|default:0 }}'),
-        reputation: parseInt('{{ session.reputation|default:0 }}'),
-        employees: parseInt('{{ session.employees|default:1 }}'),
-        customers: parseInt('{{ session.customers|default:0 }}'),
-        day: parseInt('{{ session.day|default:1 }}'),
-        level: parseInt('{{ session.level|default:1 }}')
+        money: parseInt(sessionData.money || 500),
+        reputation: parseInt(sessionData.reputation || 0),
+        employees: parseInt(sessionData.employees || 1),
+        customers: parseInt(sessionData.customers || 0),
+        day: parseInt(sessionData.day || 1),
+        level: parseInt(sessionData.level || 1)
     };
     
     // Обновляем интерфейс
@@ -30,7 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
 {% endblock %}
 
 {% block content %}
-<div class="game-container">
+<!-- Игровой таймер -->
+{% include 'startup_game/components/game_timer.html' %}
+
+<div class="game-screen-play">
     <div class="container-fluid py-4">
         <!-- Заголовок игры -->
         <div class="row mb-4">

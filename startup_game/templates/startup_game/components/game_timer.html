@@ -1,0 +1,388 @@
+<!-- Игровой таймер (универсальный компонент) -->
+<div class="game-timer">
+    <div class="timer-content">
+        <div class="time-display">
+            <span class="time-value" id="gameTime">08:00</span>
+        </div>
+        <div class="day-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="timeProgress" style="width: 33%"></div>
+                <div class="progress-marker"></div>
+            </div>
+        </div>
+        <div class="day-counter">
+            <span class="day-label">DAY:</span>
+            <span class="day-value" id="gameDay">1</span>
+        </div>
+        <div class="money-counter">
+            <span class="money-label">💰</span>
+            <span class="money-value" id="gameMoney">500</span>
+        </div>
+    </div>
+</div>
+
+<style>
+.game-timer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 25px;
+    padding: 15px 30px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.timer-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    color: #fff;
+}
+
+.time-display {
+    font-family: 'Courier New', monospace;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffa500;
+    text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+}
+
+.day-progress {
+    position: relative;
+    width: 200px;
+    height: 8px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffa500, #ff6b35);
+    border-radius: 4px;
+    transition: width 1s ease;
+    box-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+}
+
+.progress-marker {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 12px;
+    background: #fff;
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
+.day-counter {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.day-label {
+    color: #ccc;
+}
+
+.day-value {
+    color: #ffa500;
+    text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
+}
+
+.money-counter {
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+.money-label {
+    font-size: 1.2rem;
+}
+
+.money-value {
+    color: #00ff00;
+    text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .game-timer {
+        top: 10px;
+        left: 10px;
+        right: 10px;
+        transform: none;
+        padding: 10px 15px;
+    }
+    
+    .timer-content {
+        gap: 15px;
+        font-size: 0.9rem;
+    }
+    
+    .time-display {
+        font-size: 1.2rem;
+    }
+    
+    .day-progress {
+        width: 120px;
+    }
+}
+</style>
+
+<script>
+// Функция для обновления игрового времени
+function updateGameTimer(gameTime, gameDay) {
+    // Преобразуем минуты в часы и минуты
+    const hours = Math.floor(gameTime / 60);
+    const minutes = gameTime % 60;
+    const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    
+    // Обновляем отображение
+    document.getElementById('gameTime').textContent = timeString;
+    document.getElementById('gameDay').textContent = gameDay;
+    
+    // Обновляем прогресс-бар (день = 24 часа = 1440 минут)
+    const progressPercent = (gameTime / 1440) * 100;
+    document.getElementById('timeProgress').style.width = progressPercent + '%';
+}
+
+// Автоматическое обновление времени каждую секунду
+let currentGameTime = 480; // Значение по умолчанию
+let currentGameDay = 1;
+let gamePaused = false;
+let currentMoney = 500;
+
+function startGameTimer() {
+    setInterval(() => {
+        if (gamePaused) return; // Не обновляем время если игра на паузе
+        
+        currentGameTime += 48; // 48 минут каждую секунду = 30 секунд на день (1440/30 = 48)
+        
+        // Если прошёл день (1440 минут = 24 часа)
+        if (currentGameTime >= 1440) {
+            currentGameTime = 0;
+            currentGameDay += 1;
+            
+            // Каждый день тратим 50$
+            currentMoney -= 50;
+            updateMoneyDisplay();
+            
+            // Проверяем события
+            checkForEvents();
+        }
+        
+        updateGameTimer(currentGameTime, currentGameDay);
+        
+        // Синхронизируем с сервером каждые 10 секунд
+        if (Math.floor(currentGameTime / 48) % 10 === 0) {
+            syncTimeWithServer();
+        }
+    }, 1000); // Каждую секунду
+}
+
+// Обновление отображения денег
+function updateMoneyDisplay() {
+    document.getElementById('gameMoney').textContent = currentMoney;
+    
+    // Если денег мало, меняем цвет на красный
+    const moneyElement = document.getElementById('gameMoney');
+    if (currentMoney < 100) {
+        moneyElement.style.color = '#ff0000';
+        moneyElement.style.textShadow = '0 0 10px rgba(255, 0, 0, 0.5)';
+    } else {
+        moneyElement.style.color = '#00ff00';
+        moneyElement.style.textShadow = '0 0 10px rgba(0, 255, 0, 0.5)';
+    }
+}
+
+// Проверка событий
+function checkForEvents() {
+    // Первое событие происходит на 4-6 день
+    if (currentGameDay >= 4 && currentGameDay <= 6 && !hasEventOccurred('startup_idea')) {
+        triggerEvent('startup_idea');
+    }
+}
+
+// Проверка, произошло ли событие
+function hasEventOccurred(eventId) {
+    return localStorage.getItem('event_' + eventId) === 'true';
+}
+
+// Запуск события
+function triggerEvent(eventId) {
+    gamePaused = true;
+    localStorage.setItem('event_' + eventId, 'true');
+    
+    if (eventId === 'startup_idea') {
+        showStartupIdeaEvent();
+    }
+}
+
+// Показ события "Идея стартапа"
+function showStartupIdeaEvent() {
+    const modal = document.getElementById('eventModal');
+    if (!modal) {
+        createEventModal();
+    }
+    
+    const title = document.getElementById('eventTitle');
+    const description = document.getElementById('eventDescription');
+    const choices = document.getElementById('eventChoices');
+    
+    title.textContent = 'Идея стартапа';
+    description.textContent = 'У вас есть идея стартапа, которая изменит мир, но что с ней делать дальше?';
+    
+    choices.innerHTML = `
+        <button class="btn btn-primary event-choice" onclick="makeChoice('friends')">
+            Поделиться с друзьями, получить их обратную связь
+        </button>
+        <button class="btn btn-primary event-choice" onclick="makeChoice('presentation')">
+            Подготовить презентацию для питчинга инвесторам
+        </button>
+        <button class="btn btn-primary event-choice" onclick="makeChoice('prototype')">
+            Заняться прототипом идеи, чтобы было что показать
+        </button>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Создание модального окна для событий
+function createEventModal() {
+    const modalHTML = `
+        <div class="modal fade" id="eventModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="eventTitle">Событие</h5>
+                    </div>
+                    <div class="modal-body">
+                        <p id="eventDescription">Описание события</p>
+                        <div id="eventChoices" class="d-grid gap-2">
+                            <!-- Кнопки выбора -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Выбор решения
+function makeChoice(choice) {
+    // Бросаем кубик (1-6)
+    const diceRoll = Math.floor(Math.random() * 6) + 1;
+    
+    // Сохраняем выбор
+    localStorage.setItem('last_choice', choice);
+    localStorage.setItem('last_dice_roll', diceRoll);
+    
+    // Показываем результат
+    showChoiceResult(choice, diceRoll);
+}
+
+// Показ результата выбора
+function showChoiceResult(choice, diceRoll) {
+    const description = document.getElementById('eventDescription');
+    const choices = document.getElementById('eventChoices');
+    
+    let resultText = '';
+    
+    if (choice === 'friends') {
+        if (diceRoll >= 5) {
+            resultText = 'Друзья были в восторге от вашей идеи! Они дали много полезных советов и готовы помочь. +50$ от поддержки!';
+            currentMoney += 50;
+        } else if (diceRoll >= 3) {
+            resultText = 'Друзья отнеслись к идее нейтрально. Получили несколько замечаний, но ничего критичного.';
+        } else {
+            resultText = 'Друзья отнеслись к идее скептически. Пришлось потратить время на объяснения. -20$ на дополнительные встречи.';
+            currentMoney -= 20;
+        }
+    } else if (choice === 'presentation') {
+        resultText = 'Презентация готова! Вы потратили время, но теперь у вас есть профессиональный материал для инвесторов.';
+    } else if (choice === 'prototype') {
+        resultText = 'Прототип готов! Теперь у вас есть что показать потенциальным клиентам и инвесторам.';
+    }
+    
+    description.textContent = resultText;
+    choices.innerHTML = `
+        <button class="btn btn-success" onclick="continueGame()">
+            Продолжить игру
+        </button>
+    `;
+    
+    updateMoneyDisplay();
+    
+    // Синхронизируем с сервером
+    syncChoiceWithServer(choice, diceRoll);
+}
+
+// Продолжить игру
+function continueGame() {
+    gamePaused = false;
+    const modal = bootstrap.Modal.getInstance(document.getElementById('eventModal'));
+    modal.hide();
+}
+
+// Синхронизация выбора с сервером
+function syncChoiceWithServer(choice, diceRoll) {
+    fetch('/game/api/choice/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            choice: choice,
+            dice_roll: diceRoll,
+            money: currentMoney
+        })
+    }).catch(err => console.log('Choice sync error:', err));
+}
+
+// Синхронизация времени с сервером
+function syncTimeWithServer() {
+    if (typeof fetch !== 'undefined') {
+        fetch('/game/api/sync-time/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                game_time: currentGameTime,
+                day: currentGameDay
+            })
+        }).catch(err => console.log('Sync error:', err));
+    }
+}
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализируем значения из Django (если доступны)
+    if (typeof gameTimerData !== 'undefined') {
+        currentGameTime = gameTimerData.gameTime || 480;
+        currentGameDay = gameTimerData.gameDay || 1;
+        gamePaused = gameTimerData.gamePaused || false;
+        currentMoney = gameTimerData.currentMoney || 500;
+    }
+    
+    updateGameTimer(currentGameTime, currentGameDay);
+    updateMoneyDisplay();
+    startGameTimer();
+});
+</script>

@@ -23,6 +23,27 @@ def company_name(request):
     if request.method == 'POST':
         company_name = request.POST.get('company_name', '').strip()
         if company_name:
+            # Сохраняем название в сессии и переходим к выбору отрасли
+            request.session['new_company_name'] = company_name
+            return redirect('startup_game:industry_select')
+    
+    context = {
+        'page_title': 'Название компании - Startup Simulator',
+        'default_name': f"{request.user.username}'s Startup"
+    }
+    return render(request, 'startup_game/company_name.html', context)
+
+
+@login_required
+def industry_select(request):
+    """Страница выбора отрасли"""
+    company_name = request.session.get('new_company_name')
+    if not company_name:
+        return redirect('startup_game:company_name')
+    
+    if request.method == 'POST':
+        industry = request.POST.get('industry', '').strip()
+        if industry:
             # Завершаем текущие активные сессии
             GameSession.objects.filter(user=request.user, is_active=True).update(is_active=False)
             
@@ -30,22 +51,29 @@ def company_name(request):
             session = GameSession.objects.create(
                 user=request.user,
                 company_name=company_name,
-                money=1000,
+                industry=industry,
+                money=500,  # Стартовая сумма 500$
                 reputation=0,
                 employees=1,
                 customers=0,
                 day=1,
                 level=1,
-                is_active=True
+                game_time=480,  # 8:00 утра
+                is_active=True,
+                game_paused=False
             )
+            
+            # Очищаем временные данные из сессии
+            if 'new_company_name' in request.session:
+                del request.session['new_company_name']
             
             return redirect('startup_game:play')
     
     context = {
-        'page_title': 'Название компании - Startup Simulator',
-        'default_name': f"{request.user.username}'s Startup"
+        'page_title': 'Выбор отрасли - Startup Simulator',
+        'company_name': company_name
     }
-    return render(request, 'startup_game/company_name.html', context)
+    return render(request, 'startup_game/industry_select.html', context)
 
 
 @login_required
@@ -81,6 +109,57 @@ def game_play(request):
         'hire_cost': hire_cost,
     }
     return render(request, 'startup_game/play.html', context)
+
+
+@login_required
+@csrf_exempt
+def sync_time(request):
+    """API для синхронизации игрового времени"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            game_time = data.get('game_time', 480)
+            day = data.get('day', 1)
+            
+            # Обновляем активную сессию пользователя
+            session = GameSession.objects.filter(user=request.user, is_active=True).first()
+            if session:
+                session.game_time = game_time
+                session.day = day
+                session.save()
+                
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
+
+
+@login_required
+@csrf_exempt
+def process_choice(request):
+    """API для обработки выборов игрока"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            choice = data.get('choice', '')
+            dice_roll = data.get('dice_roll', 1)
+            money = data.get('money', 500)
+            
+            # Обновляем активную сессию пользователя
+            session = GameSession.objects.filter(user=request.user, is_active=True).first()
+            if session:
+                session.last_decision = choice
+                session.dice_roll = dice_roll
+                session.money = money
+                session.game_paused = False
+                session.save()
+                
+            return JsonResponse({'success': True})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 
 @login_required

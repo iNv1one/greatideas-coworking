@@ -10,17 +10,33 @@ class GameSession(models.Model):
     
     # Игровые параметры
     company_name = models.CharField(max_length=100, default='My Startup')
-    money = models.IntegerField(default=1000)  # Деньги
+    industry = models.CharField(max_length=50, default='IT', choices=[
+        ('IT', 'Информационные технологии'),
+        ('FOOD', 'Еда и рестораны'),
+        ('RETAIL', 'Розничная торговля'),
+        ('HEALTH', 'Здравоохранение'),
+        ('EDUCATION', 'Образование'),
+    ])
+    money = models.IntegerField(default=500)  # Деньги
     reputation = models.IntegerField(default=0)  # Репутация
     employees = models.IntegerField(default=1)  # Сотрудники
     customers = models.IntegerField(default=0)  # Клиенты
     day = models.IntegerField(default=1)  # Игровой день
     level = models.IntegerField(default=1)  # Уровень
     
+    # Игровое время (в минутах от начала дня, 0-1440)
+    game_time = models.IntegerField(default=480)  # Начинаем с 8:00 (480 минут)
+    
+    # События и решения
+    last_event_day = models.IntegerField(default=0)  # Последний день события
+    last_decision = models.CharField(max_length=50, blank=True)  # Последнее решение
+    dice_roll = models.IntegerField(default=1)  # Последний бросок кубика (1-6)
+    
     # Игровое состояние
     is_active = models.BooleanField(default=True)
     game_over = models.BooleanField(default=False)
     victory = models.BooleanField(default=False)
+    game_paused = models.BooleanField(default=False)  # Пауза для событий
     
     class Meta:
         verbose_name = 'Game Session'

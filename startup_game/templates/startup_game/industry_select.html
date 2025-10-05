@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Выбор отрасли - Startup Simulator{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'startup_game/css/game.css' %}">
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.game-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{% static "startup_game/images/bg1.PNG" %}');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.game-dialog {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 600px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    backdrop-filter: blur(10px);
+    text-align: center;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.game-dialog h2 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.game-dialog p {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1rem;
+}
+
+.industry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.industry-option {
+    background: #f8f9fa;
+    border: 3px solid transparent;
+    border-radius: 15px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.industry-option:hover {
+    border-color: #FF6B35;
+    background: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 107, 53, 0.2);
+}
+
+.industry-option.selected {
+    border-color: #FF6B35;
+    background: #fff;
+    box-shadow: 0 0 20px rgba(255, 107, 53, 0.3);
+}
+
+.industry-option input[type="radio"] {
+    display: none;
+}
+
+.industry-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: #FF6B35;
+}
+
+.industry-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.industry-description {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.4;
+}
+
+.btn-game-primary {
+    background: linear-gradient(45deg, #FF6B35, #F39C12);
+    border: none;
+    border-radius: 15px;
+    padding: 15px 40px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    transition: all 0.3s ease;
+    width: 100%;
+}
+
+.btn-game-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 107, 53, 0.3);
+    color: white;
+}
+
+.btn-game-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .game-dialog {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+    
+    .industry-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .industry-option {
+        padding: 15px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="game-screen">
+    <div class="game-dialog">
+        <h2>
+            <i class="fas fa-industry me-2"></i>
+            Выберите отрасль
+        </h2>
+        <p>В какой сфере будет работать ваш стартап?</p>
+        
+        <form method="post" id="industryForm">
+            {% csrf_token %}
+            <div class="industry-grid">
+                <label class="industry-option" for="industry_IT">
+                    <input type="radio" name="industry" value="IT" id="industry_IT">
+                    <div class="industry-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div class="industry-title">IT / Технологии</div>
+                    <div class="industry-description">
+                        Разработка программного обеспечения, мобильных приложений и веб-сервисов
+                    </div>
+                </label>
+                
+                <label class="industry-option" for="industry_FOOD">
+                    <input type="radio" name="industry" value="FOOD" id="industry_FOOD">
+                    <div class="industry-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="industry-title">Еда и рестораны</div>
+                    <div class="industry-description">
+                        Кафе, рестораны, доставка еды и пищевое производство
+                    </div>
+                </label>
+                
+                <label class="industry-option" for="industry_RETAIL">
+                    <input type="radio" name="industry" value="RETAIL" id="industry_RETAIL">
+                    <div class="industry-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="industry-title">Розничная торговля</div>
+                    <div class="industry-description">
+                        Магазины, интернет-торговля и товары для потребителей
+                    </div>
+                </label>
+                
+                <label class="industry-option" for="industry_HEALTH">
+                    <input type="radio" name="industry" value="HEALTH" id="industry_HEALTH">
+                    <div class="industry-icon">
+                        <i class="fas fa-heartbeat"></i>
+                    </div>
+                    <div class="industry-title">Здравоохранение</div>
+                    <div class="industry-description">
+                        Медицинские услуги, фармацевтика и здоровье
+                    </div>
+                </label>
+                
+                <label class="industry-option" for="industry_EDUCATION">
+                    <input type="radio" name="industry" value="EDUCATION" id="industry_EDUCATION">
+                    <div class="industry-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="industry-title">Образование</div>
+                    <div class="industry-description">
+                        Онлайн-курсы, тренинги и образовательные платформы
+                    </div>
+                </label>
+            </div>
+            
+            <button type="submit" class="btn btn-game-primary" id="continueBtn" disabled>
+                <i class="fas fa-arrow-right me-2"></i>
+                Продолжить
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const industryOptions = document.querySelectorAll('input[name="industry"]');
+    const continueBtn = document.getElementById('continueBtn');
+    
+    industryOptions.forEach(option => {
+        option.addEventListener('change', function() {
+            // Убираем выделение со всех опций
+            document.querySelectorAll('.industry-option').forEach(label => {
+                label.classList.remove('selected');
+            });
+            
+            // Добавляем выделение к выбранной опции
+            if (this.checked) {
+                this.parentElement.classList.add('selected');
+                continueBtn.disabled = false;
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
