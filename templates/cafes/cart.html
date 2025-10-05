@@ -408,7 +408,8 @@ function proceedToCheckout() {
     alert('Функция оформления заказа будет добавлена позже!\n\nВ полной версии здесь будет:\n- Выбор способа получения\n- Ввод контактных данных\n- Выбор способа оплаты\n- Интеграция с Telegram Bot');
 }
 
-function payWithTelegram() {
+// УДАЛЕНА ДУБЛИРУЮЩАЯ ФУНКЦИЯ - используется функция ниже
+/* function payWithTelegram() {
     // Проверяем выбор рабочего места
     const workspaceSelect = document.getElementById('workspaceNumber');
     const workspaceNumber = workspaceSelect ? workspaceSelect.value : '';
@@ -497,7 +498,7 @@ function payWithTelegram() {
         telegramBtn.disabled = false;
         showNotification('Ошибка при создании платежа', 'error');
     });
-}
+} */
 
 function getCartData() {
     // Собираем данные корзины из DOM элементов
@@ -564,6 +565,34 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Функция оплаты через Telegram
 function payWithTelegram() {
+    // Проверяем выбор рабочего места
+    const workspaceSelect = document.getElementById('workspaceNumber');
+    const workspaceNumber = workspaceSelect ? workspaceSelect.value : '';
+    
+    console.log('Выбранное место:', workspaceNumber); // Для отладки
+    
+    if (!workspaceNumber || workspaceNumber === '' || workspaceSelect.selectedIndex === 0) {
+        // Показываем уведомление внутри приложения
+        showNotification('Пожалуйста, выберите номер рабочего места для доставки заказа', 'error');
+        
+        // Подсвечиваем поле красным
+        if (workspaceSelect) {
+            workspaceSelect.classList.add('is-invalid');
+            workspaceSelect.focus();
+            
+            // Убираем подсветку через 5 секунд
+            setTimeout(() => {
+                workspaceSelect.classList.remove('is-invalid');
+            }, 5000);
+        }
+        return;
+    }
+    
+    // Убираем подсветку ошибки если поле заполнено правильно
+    if (workspaceSelect) {
+        workspaceSelect.classList.remove('is-invalid');
+    }
+
     // Проверяем, что пользователь авторизован через Telegram
     const telegramUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     
@@ -597,7 +626,8 @@ function payWithTelegram() {
             delivery_type: 'pickup',
             customer_name: telegramUser.first_name + ' ' + (telegramUser.last_name || ''),
             customer_phone: '',  // Telegram не всегда предоставляет телефон
-            comment: ''
+            workspace_number: workspaceNumber,
+            comment: 'Рабочее место: ' + workspaceNumber
         })
     })
     .then(response => response.json())
