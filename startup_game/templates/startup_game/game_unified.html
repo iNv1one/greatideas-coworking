@@ -170,6 +170,13 @@ function createCompany() {
 <div class="game-screen-play">
     <div class="container-fluid py-4">
         
+        {% if error_message %}
+        <div class="alert alert-danger">
+            <h4>Ошибка загрузки игры</h4>
+            <p>{{ error_message }}</p>
+        </div>
+        {% endif %}
+        
         {% if not session %}
         <!-- Индикатор этапов создания компании -->
         <div class="stage-indicator text-center">
