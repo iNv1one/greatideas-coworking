@@ -219,7 +219,7 @@
                 </a>
                 <a class="position-relative" href="{% url 'cafes:cart' %}" style="color: var(--primary-color); text-decoration: none;">
                     <i class="fas fa-shopping-cart" style="font-size: 1.5rem;"></i>
-                    <span class="cart-count" id="mobile-cart-count" {% if cart_total_items > 0 %}style="display: flex;"{% else %}style="display: none;"{% endif %}>{{ cart_total_items }}</span>
+                    <span class="cart-count" id="mobile-cart-count" {% if cart_count > 0 %}style="display: flex;"{% else %}style="display: none;"{% endif %}>{{ cart_count }}</span>
                 </a>
             </div>
             
@@ -235,7 +235,7 @@
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="{% url 'cafes:cart' %}">
                             <i class="fas fa-shopping-cart cart-icon"></i>
-                            <span class="cart-count" id="desktop-cart-count" {% if cart_total_items > 0 %}style="display: flex;"{% else %}style="display: none;"{% endif %}>{{ cart_total_items }}</span>
+                            <span class="cart-count" id="desktop-cart-count" {% if cart_count > 0 %}style="display: flex;"{% else %}style="display: none;"{% endif %}>{{ cart_count }}</span>
                             Корзина
                         </a>
                     </li>

@@ -1,14 +1,19 @@
 def cart_context(request):
-    """Контекстный процессор для корзины"""
-    cart = request.session.get('cart', {})
-    total_items = 0
+    """Контекст корзины для всех страниц"""
+    cart = {}
+    cart_count = 0
     
-    for cart_data in cart.values():
-        if isinstance(cart_data, int):
-            total_items += cart_data
-        else:
-            total_items += cart_data.get('quantity', 0)
+    # Проверяем, что сессия доступна
+    if hasattr(request, 'session') and request.session:
+        try:
+            cart = request.session.get('cart', {})
+            cart_count = sum(item.get('quantity', 0) for item in cart.values())
+        except Exception:
+            # Если что-то пошло не так с сессией, просто используем пустую корзину
+            cart = {}
+            cart_count = 0
     
     return {
-        'cart_total_items': total_items,  # Общее количество товаров в навбаре
+        'cart_count': cart_count,
+        'cart': cart
     }
