@@ -310,6 +310,11 @@ function triggerEvent(eventId) {
     console.log('window.eventConfigs:', window.eventConfigs);
     console.log('Event exists in API:', window.eventConfigs && window.eventConfigs[eventId]);
     
+    // Тест функций
+    console.log('Available functions:');
+    console.log('- showEvent:', typeof showEvent);
+    console.log('- createEventModal:', typeof createEventModal);
+    
     gamePaused = true;
     stopSkillOrbSystem();
     
@@ -319,7 +324,14 @@ function triggerEvent(eventId) {
     // Сначала проверяем события из API
     if (window.eventConfigs && window.eventConfigs[eventId]) {
         console.log('Showing API event:', eventId);
-        showEvent(eventId);
+        console.log('showEvent function exists:', typeof showEvent);
+        console.log('showEvent function:', showEvent);
+        try {
+            showEvent(eventId);
+        } catch (error) {
+            console.error('Error in showEvent:', error);
+            console.error('Error stack:', error.stack);
+        }
         return;
     }
     
