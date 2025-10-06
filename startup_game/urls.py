@@ -15,4 +15,6 @@ urlpatterns = [
     path('api/choice/', views.process_choice, name='process_choice'),
     path('api/skill/', views.game_skill_api, name='game_skill_api'),
     path('api/events/', views.get_events_api, name='get_events_api'),
+    path('api/completed-events/', views.check_completed_events_api, name='check_completed_events'),
+    path('api/complete-event/', views.complete_event_api, name='complete_event'),
 ]

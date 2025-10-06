@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import GameSession, GameEvent, Achievement, UserAchievement, EventTemplate, EventChoice, Skill
+from .models import GameSession, GameEvent, Achievement, UserAchievement, EventTemplate, EventChoice, Skill, CompletedEvent
 
 
 @admin.register(GameSession)
@@ -105,3 +105,15 @@ class SkillAdmin(admin.ModelAdmin):
             'fields': ('color', 'icon')
         }),
     )
+
+
+@admin.register(CompletedEvent)
+class CompletedEventAdmin(admin.ModelAdmin):
+    list_display = ['session', 'event_key', 'choice_id', 'game_day', 'completed_at']
+    list_filter = ['completed_at', 'game_day', 'event_template']
+    search_fields = ['session__company_name', 'session__user__username', 'event_key', 'choice_id']
+    readonly_fields = ['completed_at']
+    raw_id_fields = ['session', 'event_template']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('session__user', 'event_template')

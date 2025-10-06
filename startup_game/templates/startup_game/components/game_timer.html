@@ -253,7 +253,7 @@ function checkForEvents() {
 }
 
 // Запуск случайного события из базы данных
-function triggerRandomEvent() {
+async function triggerRandomEvent() {
     console.log('=== triggerRandomEvent called ===');
     console.log('window.eventConfigs:', window.eventConfigs);
     console.log('eventConfigs keys:', window.eventConfigs ? Object.keys(window.eventConfigs) : 'undefined');
@@ -262,6 +262,9 @@ function triggerRandomEvent() {
     if (window.eventConfigs && Object.keys(window.eventConfigs).length > 0) {
         const eventKeys = Object.keys(window.eventConfigs);
         console.log('Available event keys:', eventKeys);
+        
+        // Загружаем завершенные события из БД
+        await loadCompletedEvents();
         
         // Фильтруем события которые еще не происходили
         const availableEvents = eventKeys.filter(key => {
@@ -291,9 +294,13 @@ function triggerRandomEvent() {
     triggerEvent(randomEvent);
 }
 
-// Проверка, произошло ли событие
+// Проверка, произошло ли событие (теперь из БД)
 function hasEventOccurred(eventId) {
-    return localStorage.getItem('event_' + eventId) === 'true';
+    // Проверяем в кэше завершенных событий
+    if (window.completedEvents) {
+        return window.completedEvents.some(event => event.event_key === eventId);
+    }
+    return false;
 }
 
 // Запуск события
@@ -305,7 +312,9 @@ function triggerEvent(eventId) {
     
     gamePaused = true;
     stopSkillOrbSystem();
-    localStorage.setItem('event_' + eventId, 'true');
+    
+    // Сохраняем событие в БД вместо localStorage
+    markEventAsCompleted(eventId);
     
     // Сначала проверяем события из API
     if (window.eventConfigs && window.eventConfigs[eventId]) {
@@ -695,6 +704,9 @@ function syncTimeWithServer() {
 document.addEventListener('DOMContentLoaded', async function() {
     // Загружаем события из базы данных
     await loadEventConfigs();
+    
+    // Загружаем завершенные события из БД
+    await loadCompletedEvents();
     
     // Создаем UI навыков на основе загруженных данных
     createSkillsUI();
@@ -1151,5 +1163,66 @@ function updateSkillsUI() {
             }
         }
     });
+}
+
+// API функции для работы с завершенными событиями
+async function loadCompletedEvents() {
+    try {
+        const response = await fetch('/game/api/completed-events/');
+        if (response.ok) {
+            const data = await response.json();
+            window.completedEvents = data.completed_events || [];
+            console.log('Загружены завершенные события:', window.completedEvents.length);
+        } else {
+            console.error('Ошибка загрузки завершенных событий:', response.status);
+            window.completedEvents = [];
+        }
+    } catch (error) {
+        console.error('Ошибка соединения при загрузке завершенных событий:', error);
+        window.completedEvents = [];
+    }
+}
+
+async function markEventAsCompleted(eventKey, choiceId = '') {
+    try {
+        const response = await fetch('/game/api/complete-event/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()
+            },
+            body: JSON.stringify({
+                event_key: eventKey,
+                choice_id: choiceId
+            })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Событие отмечено как завершенное:', eventKey);
+            
+            // Обновляем локальный кэш
+            if (!window.completedEvents) {
+                window.completedEvents = [];
+            }
+            window.completedEvents.push({
+                event_key: eventKey,
+                choice_id: choiceId
+            });
+            
+            return data;
+        } else {
+            console.error('Ошибка сохранения события:', response.status);
+            return null;
+        }
+    } catch (error) {
+        console.error('Ошибка соединения при сохранении события:', error);
+        return null;
+    }
+}
+
+function getCsrfToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+           document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
 }
 </script>

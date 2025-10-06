@@ -208,3 +208,24 @@ class Skill(models.Model):
     
     def __str__(self):
         return self.display_name
+
+
+class CompletedEvent(models.Model):
+    """Завершенные события пользователя в игровой сессии"""
+    session = models.ForeignKey(GameSession, on_delete=models.CASCADE, related_name='completed_events')
+    event_template = models.ForeignKey(EventTemplate, on_delete=models.CASCADE, blank=True, null=True)  # Если событие из БД
+    event_key = models.CharField(max_length=100, verbose_name="Ключ события")  # Для fallback событий
+    choice_id = models.CharField(max_length=100, verbose_name="ID выбранного варианта", blank=True)
+    completed_at = models.DateTimeField(auto_now_add=True)
+    game_day = models.IntegerField(verbose_name="День игры когда произошло событие")
+    
+    class Meta:
+        verbose_name = "Завершенное событие"
+        verbose_name_plural = "Завершенные события"
+        unique_together = ['session', 'event_key']  # Одно событие может быть пройдено только один раз в сессии
+        ordering = ['-completed_at']
+    
+    def __str__(self):
+        if self.event_template:
+            return f"{self.session.company_name} - {self.event_template.title} (День {self.game_day})"
+        return f"{self.session.company_name} - {self.event_key} (День {self.game_day})"

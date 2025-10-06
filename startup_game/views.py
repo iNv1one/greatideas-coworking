@@ -5,7 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 import json
 import random
-from .models import GameSession, GameEvent, Achievement, UserAchievement
+from .models import GameSession, GameEvent, Achievement, UserAchievement, EventTemplate, Skill, CompletedEvent
 
 
 def game_home(request):
@@ -644,3 +644,81 @@ def game_stats(request):
         'page_title': 'Статистика игры',
     }
     return render(request, 'startup_game/stats.html', context)
+
+
+@login_required
+@csrf_exempt
+def check_completed_events_api(request):
+    """API для проверки завершенных событий в текущей сессии"""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Получаем активную игровую сессию
+        session = GameSession.objects.filter(user=request.user, is_active=True).first()
+        if not session:
+            return JsonResponse({'completed_events': []})
+        
+        # Получаем завершенные события для этой сессии
+        completed_events = CompletedEvent.objects.filter(session=session).values('event_key', 'choice_id', 'game_day')
+        
+        return JsonResponse({
+            'completed_events': list(completed_events),
+            'session_id': session.id
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@csrf_exempt
+def complete_event_api(request):
+    """API для отметки события как завершенного"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        event_key = data.get('event_key')
+        choice_id = data.get('choice_id', '')
+        
+        if not event_key:
+            return JsonResponse({'error': 'event_key is required'}, status=400)
+        
+        # Получаем активную игровую сессию
+        session = GameSession.objects.filter(user=request.user, is_active=True).first()
+        if not session:
+            return JsonResponse({'error': 'No active game session'}, status=400)
+        
+        # Проверяем, не было ли уже завершено это событие
+        existing = CompletedEvent.objects.filter(session=session, event_key=event_key).first()
+        if existing:
+            return JsonResponse({'message': 'Event already completed', 'event_id': existing.id})
+        
+        # Пытаемся найти событие в БД
+        event_template = None
+        try:
+            event_template = EventTemplate.objects.filter(key=event_key, is_active=True).first()
+        except:
+            pass
+        
+        # Создаем запись о завершенном событии
+        completed_event = CompletedEvent.objects.create(
+            session=session,
+            event_template=event_template,
+            event_key=event_key,
+            choice_id=choice_id,
+            game_day=session.day
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'event_id': completed_event.id,
+            'message': f'Event {event_key} marked as completed'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
