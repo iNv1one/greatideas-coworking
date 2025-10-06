@@ -238,13 +238,35 @@ function updateEventProgress() {
 // Проверка событий
 function checkForEvents() {
     // Первое событие происходит на 4-6 день
-    if (currentGameDay >= 4 && currentGameDay <= 6 && !hasEventOccurred('startup_idea')) {
-        triggerEvent('startup_idea');
+    if (currentGameDay >= 4 && currentGameDay <= 6) {
+        // Используем первое событие из базы данных
+        if (window.eventConfigs && Object.keys(window.eventConfigs).length > 0) {
+            const firstEventKey = Object.keys(window.eventConfigs)[0];
+            if (!hasEventOccurred(firstEventKey)) {
+                triggerEvent(firstEventKey);
+            }
+        } else if (!hasEventOccurred('startup_idea')) {
+            triggerEvent('startup_idea');
+        }
     }
 }
 
-// Запуск случайного события
+// Запуск случайного события из базы данных
 function triggerRandomEvent() {
+    // Если события из API загружены, используем их
+    if (window.eventConfigs && Object.keys(window.eventConfigs).length > 0) {
+        const eventKeys = Object.keys(window.eventConfigs);
+        // Фильтруем события которые еще не происходили
+        const availableEvents = eventKeys.filter(key => !hasEventOccurred(key));
+        
+        if (availableEvents.length > 0) {
+            const randomEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+            triggerEvent(randomEvent);
+            return;
+        }
+    }
+    
+    // Fallback: старая система
     const events = ['market_research', 'investor_meeting', 'team_building', 'product_launch'];
     const randomEvent = events[Math.floor(Math.random() * events.length)];
     triggerEvent(randomEvent);
@@ -261,6 +283,13 @@ function triggerEvent(eventId) {
     stopSkillOrbSystem();
     localStorage.setItem('event_' + eventId, 'true');
     
+    // Сначала проверяем события из API
+    if (window.eventConfigs && window.eventConfigs[eventId]) {
+        showEvent(eventId);
+        return;
+    }
+    
+    // Fallback: старые события
     if (eventId === 'startup_idea') {
         showStartupIdeaEvent();
     } else if (eventId === 'market_research') {
