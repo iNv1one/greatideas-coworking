@@ -645,13 +645,22 @@ def get_events_api(request):
                 'moneyCost': choice.money_cost,
                 'effects': effects,
                 'buttonStyle': choice.button_style,
-                'skills': related_skills  # Добавляем информацию о навыках
+                'skills': related_skills,  # Добавляем информацию о навыках
+                # Новые поля для связанных событий
+                'nextEvents': [event.strip() for event in choice.next_events.split(',') if event.strip()] if choice.next_events else [],
+                'nextEventDelay': choice.next_event_delay
             })
         
         events_data[event.key] = {
             'title': event.title,
             'description': event.description,
-            'choices': choices_data
+            'choices': choices_data,
+            # Новые поля для управления событиями
+            'triggerType': event.trigger_type,
+            'randomChance': event.random_chance,
+            'minDay': event.min_day,
+            'maxDay': event.max_day,
+            'parentChoices': [choice.strip() for choice in event.parent_choices.split(',') if choice.strip()] if event.parent_choices else []
         }
     
     # Получаем все доступные навыки из базы данных

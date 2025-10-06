@@ -238,6 +238,9 @@ function updateEventProgress() {
 
 // Проверка событий
 function checkForEvents() {
+    // Проверяем случайные события каждый день
+    checkRandomEvents();
+    
     // Первое событие происходит на 4-6 день
     if (currentGameDay >= 4 && currentGameDay <= 6) {
         // Используем первое событие из базы данных
@@ -255,6 +258,19 @@ function checkForEvents() {
 // Запуск случайного события из базы данных
 async function triggerRandomEvent() {
     console.log('=== triggerRandomEvent called ===');
+    
+    // Сначала проверяем, есть ли запланированное связанное событие
+    if (window.scheduledEventKey) {
+        console.log('Triggering scheduled event:', window.scheduledEventKey);
+        const eventKey = window.scheduledEventKey;
+        window.scheduledEventKey = null; // Очищаем
+        triggerEvent(eventKey);
+        return;
+    }
+    
+    // Проверяем случайные события (могут появиться даже до окончания полоски)
+    checkRandomEvents();
+    
     console.log('window.eventConfigs:', window.eventConfigs);
     console.log('eventConfigs keys:', window.eventConfigs ? Object.keys(window.eventConfigs) : 'undefined');
     
@@ -266,14 +282,19 @@ async function triggerRandomEvent() {
         // Загружаем завершенные события из БД
         await loadCompletedEvents();
         
-        // Фильтруем события которые еще не происходили
+        // Фильтруем последовательные события которые еще не происходили
         const availableEvents = eventKeys.filter(key => {
+            const eventConfig = window.eventConfigs[key];
             const occurred = hasEventOccurred(key);
-            console.log(`Event ${key} occurred:`, occurred);
-            return !occurred;
+            
+            // Учитываем только последовательные события для обычного потока
+            const isSequential = !eventConfig.triggerType || eventConfig.triggerType === 'sequential';
+            
+            console.log(`Event ${key} - occurred: ${occurred}, type: ${eventConfig.triggerType}, sequential: ${isSequential}`);
+            return !occurred && isSequential;
         });
         
-        console.log('Available events (not occurred):', availableEvents);
+        console.log('Available sequential events (not occurred):', availableEvents);
         
         if (availableEvents.length > 0) {
             const randomEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
@@ -281,7 +302,7 @@ async function triggerRandomEvent() {
             triggerEvent(randomEvent);
             return;
         } else {
-            console.log('All events have already occurred!');
+            console.log('All sequential events have already occurred!');
         }
     } else {
         console.log('No API events found, using fallback');
@@ -563,8 +584,13 @@ function makeChoice(choiceId, eventKey) {
     // Обновляем доступные навыки для орбов
     updateAvailableSkills(choice);
     
-    // Планируем следующее событие с учетом временных затрат
-    scheduleNextEvent(choice.timeCost);
+    // Планируем связанное событие, если есть
+    if (choice.nextEvents && choice.nextEvents.length > 0) {
+        scheduleTriggeredEvent(choice.nextEvents, choice.nextEventDelay || 1);
+    } else {
+        // Планируем обычное следующее событие с учетом временных затрат
+        scheduleNextEvent(choice.timeCost);
+    }
     
     // Показываем результат
     showChoiceResult(choice, eventKey);
@@ -694,6 +720,51 @@ function syncTimeWithServer() {
             })
         }).catch(err => console.log('Sync error:', err));
     }
+}
+
+// Планирование связанного события
+function scheduleTriggeredEvent(nextEventKeys, delayDays) {
+    console.log('Scheduling triggered event:', nextEventKeys, 'in', delayDays, 'days');
+    
+    // Выбираем случайное событие из списка
+    const eventKeys = Array.isArray(nextEventKeys) ? nextEventKeys : nextEventKeys.split(',').map(s => s.trim());
+    const randomEventKey = eventKeys[Math.floor(Math.random() * eventKeys.length)];
+    
+    // Запланируем событие через delayDays дней
+    const delayMinutes = delayDays * 1; // 1 день = 1 минута игрового времени
+    eventTimeLeft = delayMinutes * 60; // переводим в секунды
+    nextEventTime = eventTimeLeft;
+    
+    // Сохраняем ключ следующего события
+    window.scheduledEventKey = randomEventKey;
+    
+    console.log(`Scheduled triggered event ${randomEventKey} in ${delayDays} days (${delayMinutes} minutes)`);
+}
+
+// Проверка случайных событий
+function checkRandomEvents() {
+    if (!window.eventConfigs) return;
+    
+    Object.keys(window.eventConfigs).forEach(eventKey => {
+        const eventConfig = window.eventConfigs[eventKey];
+        
+        // Проверяем только случайные события
+        if (eventConfig.triggerType !== 'random') return;
+        
+        // Проверяем диапазон дней
+        if (currentGameDay < eventConfig.minDay) return;
+        if (eventConfig.maxDay && currentGameDay > eventConfig.maxDay) return;
+        
+        // Проверяем, не происходило ли уже это событие
+        if (hasEventOccurred(eventKey)) return;
+        
+        // Проверяем вероятность
+        const chance = eventConfig.randomChance || 0.1;
+        if (Math.random() < chance) {
+            console.log(`Random event triggered: ${eventKey} (chance: ${chance * 100}%)`);
+            triggerEvent(eventKey);
+        }
+    });
 }
 
 // Инициализация при загрузке

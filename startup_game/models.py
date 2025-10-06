@@ -139,6 +139,23 @@ class EventTemplate(models.Model):
     is_active = models.BooleanField(default=True, help_text="Активно ли событие")
     order = models.IntegerField(default=0, help_text="Порядок появления (меньше = раньше)")
     
+    # Новые поля для случайных событий
+    EVENT_TRIGGER_TYPES = [
+        ('sequential', 'Последовательное (по очереди)'),
+        ('random', 'Случайное (может появиться в любое время)'),
+        ('triggered', 'Инициируемое (появляется после выбора)'),
+    ]
+    trigger_type = models.CharField(max_length=20, choices=EVENT_TRIGGER_TYPES, default='sequential', 
+                                   help_text="Как срабатывает событие")
+    
+    # Поля для случайных событий
+    random_chance = models.FloatField(default=0.1, help_text="Вероятность появления каждый день (0.1 = 10%)")
+    min_day = models.IntegerField(default=1, help_text="Минимальный день для появления")
+    max_day = models.IntegerField(null=True, blank=True, help_text="Максимальный день (пусто = без ограничений)")
+    
+    # Поле для связанных событий (может быть несколько через запятую)
+    parent_choices = models.TextField(blank=True, help_text="ID выборов, после которых появляется это событие (через запятую)")
+    
     class Meta:
         verbose_name = 'Шаблон события'
         verbose_name_plural = 'Шаблоны событий'
@@ -154,6 +171,10 @@ class EventChoice(models.Model):
     choice_id = models.CharField(max_length=50, help_text="ID выбора (например: survey)")
     title = models.CharField(max_length=200, help_text="Текст кнопки")
     description = models.CharField(max_length=300, help_text="Краткое описание действия")
+    
+    # Поле для следующих событий (может быть несколько через запятую)
+    next_events = models.TextField(blank=True, help_text="Ключи событий, которые могут появиться после этого выбора (через запятую)")
+    next_event_delay = models.IntegerField(default=1, help_text="Через сколько дней появится следующее событие")
     
     # Затраты
     time_cost = models.IntegerField(default=1, help_text="Стоимость в днях (1 день = 1 минута)")
