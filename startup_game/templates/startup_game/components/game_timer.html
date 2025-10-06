@@ -378,6 +378,20 @@ function showStartupIdeaEvent() {
         </button>
     `;
     
+    // Добавляем задержку для кнопок события чтобы предотвратить случайные клики
+    setTimeout(() => {
+        const eventButtons = choices.querySelectorAll('.event-choice');
+        eventButtons.forEach(button => {
+            button.disabled = true;
+            button.style.opacity = '0.6';
+            
+            setTimeout(() => {
+                button.disabled = false;
+                button.style.opacity = '1';
+            }, 2000);
+        });
+    }, 100); // Небольшая задержка чтобы дождаться добавления элементов в DOM
+    
     const bsModal = new bootstrap.Modal(modal);
     bsModal.show();
 }
@@ -461,6 +475,18 @@ function showGameEvent(eventKey) {
     });
     
     choices.innerHTML = choicesHTML;
+    
+    // Добавляем задержку для кнопок событий чтобы предотвратить случайные клики
+    const eventButtons = choices.querySelectorAll('.event-choice');
+    eventButtons.forEach((button, index) => {
+        button.disabled = true;
+        button.style.opacity = '0.6';
+        
+        setTimeout(() => {
+            button.disabled = false;
+            button.style.opacity = '1';
+        }, 2000); // 2 секунды задержки
+    });
     
     console.log('Setting modal visibility...');
     modal.style.display = 'block';
@@ -768,8 +794,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateGameTimer(currentGameTime, currentGameDay);
     updateMoneyDisplay();
     
-    // Инициализируем событийный таймер (первое событие отключено)
-    eventTimeLeft = 600; // Первое событие через 10 минут игрового времени
+    // Инициализируем событийный таймер
+    eventTimeLeft = 1; // Первое событие сразу через 1 секунду
     nextEventTime = eventTimeLeft;
     
     startGameTimer();
