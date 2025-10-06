@@ -553,6 +553,56 @@ def game_skill_api(request):
 
 
 @login_required
+@csrf_exempt  
+def get_events_api(request):
+    """API для получения событий из базы данных"""
+    from .models import EventTemplate
+    
+    events = EventTemplate.objects.filter(is_active=True).prefetch_related('choices').order_by('order')
+    
+    events_data = {}
+    for event in events:
+        choices_data = []
+        for choice in event.choices.all().order_by('order'):
+            # Создаем объект эффектов
+            effects = {}
+            if choice.money_effect != 0:
+                effects['money'] = choice.money_effect
+            if choice.reputation_effect != 0:
+                effects['reputation'] = choice.reputation_effect
+            if choice.employees_effect != 0:
+                effects['employees'] = choice.employees_effect
+            if choice.customers_effect != 0:
+                effects['customers'] = choice.customers_effect
+            if choice.prototype_skill_effect != 0:
+                effects['prototype_skill'] = choice.prototype_skill_effect
+            if choice.presentation_skill_effect != 0:
+                effects['presentation_skill'] = choice.presentation_skill_effect
+            if choice.pitching_skill_effect != 0:
+                effects['pitching_skill'] = choice.pitching_skill_effect
+            if choice.team_skill_effect != 0:
+                effects['team_skill'] = choice.team_skill_effect
+            
+            choices_data.append({
+                'id': choice.choice_id,
+                'text': choice.title,
+                'description': choice.description,
+                'timeCost': choice.time_cost,
+                'moneyCost': choice.money_cost,
+                'effects': effects,
+                'buttonStyle': choice.button_style
+            })
+        
+        events_data[event.key] = {
+            'title': event.title,
+            'description': event.description,
+            'choices': choices_data
+        }
+    
+    return JsonResponse(events_data)
+
+
+@login_required
 def game_stats(request):
     """Статистика игры"""
     sessions = GameSession.objects.filter(user=request.user).order_by('-updated_at')

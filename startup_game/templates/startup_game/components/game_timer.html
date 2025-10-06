@@ -329,11 +329,17 @@ function createEventModal() {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
 
-// Событие "Исследование рынка"
-function showMarketResearchEvent() {
+// Универсальная функция для отображения событий
+function showEvent(eventKey) {
+    const config = eventConfigs[eventKey];
+    if (!config) {
+        console.error('Event config not found:', eventKey);
+        return;
+    }
+    
     let modal = document.getElementById('eventModal');
     if (modal) {
-        modal.remove(); // Удаляем старое модальное окно
+        modal.remove();
     }
     
     createEventModal();
@@ -343,164 +349,212 @@ function showMarketResearchEvent() {
     const description = document.getElementById('eventDescription');
     const choices = document.getElementById('eventChoices');
     
-    title.textContent = 'Исследование рынка';
-    description.textContent = 'Настало время изучить ваш рынок. Как вы планируете это сделать?';
+    title.textContent = config.title;
+    description.textContent = config.description;
     
-    choices.innerHTML = `
-        <button class="btn btn-success event-choice" onclick="makeChoice('survey')">
-            Провести онлайн-опрос потенциальных клиентов
-        </button>
-        <button class="btn btn-info event-choice" onclick="makeChoice('competitors')">
-            Глубоко изучить конкурентов и их стратегии
-        </button>
-        <button class="btn btn-warning event-choice" onclick="makeChoice('focus_group')">
-            Организовать фокус-группу для обратной связи
-        </button>
-    `;
+    // Создаем кнопки с информацией о затратах
+    let choicesHTML = '';
+    config.choices.forEach(choice => {
+        const buttonClass = getButtonClass(choice);
+        const timeText = choice.timeCost === 1 ? '1 день' : `${choice.timeCost} дня`;
+        const moneyText = choice.moneyCost === 0 ? 'Бесплатно' : `$${choice.moneyCost}`;
+        
+        choicesHTML += `
+            <button class="btn ${buttonClass} event-choice mb-2" onclick="makeChoice('${choice.id}', '${eventKey}')">
+                <div class="choice-title">${choice.text}</div>
+                <div class="choice-description">${choice.description}</div>
+                <div class="choice-costs">
+                    <span class="time-cost">⏱️ ${timeText}</span>
+                    <span class="money-cost">💰 ${moneyText}</span>
+                </div>
+            </button>
+        `;
+    });
     
-    // Показываем модальное окно без Bootstrap объекта
+    choices.innerHTML = choicesHTML;
+    
     modal.style.display = 'block';
     modal.classList.add('show');
     document.body.classList.add('modal-open');
+}
+
+// Функция для определения класса кнопки
+function getButtonClass(choice) {
+    // Если в выборе есть buttonStyle, используем его
+    if (choice.buttonStyle) {
+        return choice.buttonStyle;
+    }
+    
+    // Fallback к старым стилям
+    const buttonClasses = {
+        'survey': 'btn-success',
+        'competitors': 'btn-info', 
+        'focus_group': 'btn-warning',
+        'passionate': 'btn-primary',
+        'numbers': 'btn-secondary',
+        'demo': 'btn-success',
+        'developer': 'btn-info',
+        'marketer': 'btn-warning',
+        'cofounder': 'btn-danger',
+        'beta': 'btn-success',
+        'full_launch': 'btn-primary',
+        'soft_launch': 'btn-secondary'
+    };
+    return buttonClasses[choice.id] || 'btn-primary';
+}
+
+// Событие "Исследование рынка"
+function showMarketResearchEvent() {
+    showEvent('market_research');
 }
 
 // Событие "Встреча с инвестором"
 function showInvestorMeetingEvent() {
-    let modal = document.getElementById('eventModal');
-    if (modal) {
-        modal.remove();
-    }
-    
-    createEventModal();
-    modal = document.getElementById('eventModal');
-    
-    const title = document.getElementById('eventTitle');
-    const description = document.getElementById('eventDescription');
-    const choices = document.getElementById('eventChoices');
-    
-    title.textContent = 'Встреча с инвестором';
-    description.textContent = 'У вас есть возможность встретиться с потенциальным инвестором. Какую стратегию выберете?';
-    
-    choices.innerHTML = `
-        <button class="btn btn-primary event-choice" onclick="makeChoice('passionate')">
-            Страстно рассказать о своей идее и видении
-        </button>
-        <button class="btn btn-secondary event-choice" onclick="makeChoice('numbers')">
-            Сосредоточиться на цифрах и бизнес-плане
-        </button>
-        <button class="btn btn-success event-choice" onclick="makeChoice('demo')">
-            Показать работающий прототип или демо
-        </button>
-    `;
-    
-    modal.style.display = 'block';
-    modal.classList.add('show');
-    document.body.classList.add('modal-open');
+    showEvent('investor_meeting');
 }
 
 // Событие "Набор команды"
 function showTeamBuildingEvent() {
-    let modal = document.getElementById('eventModal');
-    if (modal) {
-        modal.remove();
-    }
-    
-    createEventModal();
-    modal = document.getElementById('eventModal');
-    
-    const title = document.getElementById('eventTitle');
-    const description = document.getElementById('eventDescription');
-    const choices = document.getElementById('eventChoices');
-    
-    title.textContent = 'Формирование команды';
-    description.textContent = 'Ваш стартап растет, и вам нужны новые люди. Кого искать в первую очередь?';
-    
-    choices.innerHTML = `
-        <button class="btn btn-info event-choice" onclick="makeChoice('developer')">
-            Найти опытного разработчика
-        </button>
-        <button class="btn btn-warning event-choice" onclick="makeChoice('marketer')">
-            Привлечь специалиста по маркетингу
-        </button>
-        <button class="btn btn-danger event-choice" onclick="makeChoice('cofounder')">
-            Найти со-основателя с дополнительными навыками
-        </button>
-    `;
-    
-    modal.style.display = 'block';
-    modal.classList.add('show');
-    document.body.classList.add('modal-open');
+    showEvent('team_building');
 }
 
 // Событие "Запуск продукта"
 function showProductLaunchEvent() {
-    let modal = document.getElementById('eventModal');
-    if (modal) {
-        modal.remove();
-    }
-    
-    createEventModal();
-    modal = document.getElementById('eventModal');
-    
-    const title = document.getElementById('eventTitle');
-    const description = document.getElementById('eventDescription');
-    const choices = document.getElementById('eventChoices');
-    
-    title.textContent = 'Запуск продукта';
-    description.textContent = 'Ваш продукт готов к запуску! Как вы планируете выходить на рынок?';
-    
-    choices.innerHTML = `
-        <button class="btn btn-success event-choice" onclick="makeChoice('beta')">
-            Сначала запустить бета-версию для тестирования
-        </button>
-        <button class="btn btn-primary event-choice" onclick="makeChoice('full_launch')">
-            Сразу полноценный запуск с маркетинговой кампанией
-        </button>
-        <button class="btn btn-secondary event-choice" onclick="makeChoice('soft_launch')">
-            Мягкий запуск для узкой аудитории
-        </button>
-    `;
-    
-    modal.style.display = 'block';
-    modal.classList.add('show');
-    document.body.classList.add('modal-open');
+    showEvent('product_launch');
 }
 
 // Выбор решения
-function makeChoice(choice) {
-    // Бросаем кубик (1-6)
-    const diceRoll = Math.floor(Math.random() * 6) + 1;
+function makeChoice(choiceId, eventKey) {
+    // Находим конфигурацию события и выбора
+    const eventConfig = eventConfigs[eventKey];
+    if (!eventConfig) {
+        console.error('Event config not found:', eventKey);
+        return;
+    }
     
-    // Сохраняем выбор
-    localStorage.setItem('last_choice', choice);
-    localStorage.setItem('last_dice_roll', diceRoll);
+    const choice = eventConfig.choices.find(c => c.id === choiceId);
+    if (!choice) {
+        console.error('Choice not found:', choiceId, 'in event:', eventKey);
+        return;
+    }
+    
+    // Применяем затраты и эффекты
+    applyChoiceEffects(choice);
+    
+    // Планируем следующее событие с учетом временных затрат
+    scheduleNextEvent(choice.timeCost);
     
     // Показываем результат
-    showChoiceResult(choice, diceRoll);
+    showChoiceResult(choice, eventKey);
+}
+
+// Применение эффектов выбора
+function applyChoiceEffects(choice) {
+    // Проверяем, хватает ли денег
+    if (choice.moneyCost > currentMoney) {
+        alert('Недостаточно денег для этого действия!');
+        return false;
+    }
+    
+    // Списываем деньги
+    currentMoney -= choice.moneyCost;
+    
+    // Применяем эффекты
+    if (choice.effects) {
+        Object.keys(choice.effects).forEach(effect => {
+            const value = choice.effects[effect];
+            
+            switch(effect) {
+                case 'money':
+                    currentMoney += value;
+                    break;
+                case 'reputation':
+                    // Обновляем репутацию (пока в JS переменной)
+                    break;
+                case 'employees':
+                    // Обновляем сотрудников
+                    break;
+                case 'customers':
+                    // Обновляем клиентов
+                    break;
+                case 'prototype_skill':
+                    currentSkills.prototype += value;
+                    break;
+                case 'presentation_skill':
+                    currentSkills.presentation += value;
+                    break;
+                case 'pitching_skill':
+                    currentSkills.pitching += value;
+                    break;
+                case 'team_skill':
+                    currentSkills.team += value;
+                    break;
+            }
+        });
+    }
+    
+    // Обновляем UI
+    updateMoneyDisplay();
+    updateSkillsUI();
+    
+    return true;
 }
 
 // Показ результата выбора
-function showChoiceResult(choice, diceRoll) {
+function showChoiceResult(choice, eventKey) {
     const description = document.getElementById('eventDescription');
     const choices = document.getElementById('eventChoices');
     
-    let resultText = '';
+    // Формируем текст результата
+    let resultText = `Выбор "${choice.text}" выполнен!`;
     
-    if (choice === 'friends') {
-        if (diceRoll >= 5) {
-            resultText = 'Друзья были в восторге от вашей идеи! Они дали много полезных советов и готовы помочь. +50$ от поддержки!';
-            currentMoney += 50;
-        } else if (diceRoll >= 3) {
-            resultText = 'Друзья отнеслись к идее нейтрально. Получили несколько замечаний, но ничего критичного.';
-        } else {
-            resultText = 'Друзья отнеслись к идее скептически. Пришлось потратить время на объяснения. -20$ на дополнительные встречи.';
-            currentMoney -= 20;
-        }
-    } else if (choice === 'presentation') {
-        resultText = 'Презентация готова! Вы потратили время, но теперь у вас есть профессиональный материал для инвесторов.';
-    } else if (choice === 'prototype') {
-        resultText = 'Прототип готов! Теперь у вас есть что показать потенциальным клиентам и инвесторам.';
+    // Добавляем информацию о затратах
+    const timeText = choice.timeCost === 1 ? '1 день' : `${choice.timeCost} дня`;
+    if (choice.moneyCost > 0) {
+        resultText += ` Потрачено: ${timeText} времени и $${choice.moneyCost}.`;
+    } else {
+        resultText += ` Потрачено: ${timeText} времени.`;
     }
+    
+    // Добавляем информацию об эффектах
+    if (choice.effects) {
+        const effects = [];
+        Object.keys(choice.effects).forEach(effect => {
+            const value = choice.effects[effect];
+            switch(effect) {
+                case 'money':
+                    effects.push(`+$${value}`);
+                    break;
+                case 'reputation':
+                    effects.push(`+${value} репутация`);
+                    break;
+                case 'employees':
+                    effects.push(`+${value} сотрудник${value > 1 ? 'а' : ''}`);
+                    break;
+                case 'customers':
+                    effects.push(`+${value} клиент${value > 1 ? 'а' : ''}`);
+                    break;
+                case 'prototype_skill':
+                    effects.push(`+${value} навык разработки`);
+                    break;
+                case 'presentation_skill':
+                    effects.push(`+${value} навык презентаций`);
+                    break;
+                case 'pitching_skill':
+                    effects.push(`+${value} навык питчинга`);
+                    break;
+                case 'team_skill':
+                    effects.push(`+${value} навык тимбилдинга`);
+                    break;
+            }
+        });
+        
+        if (effects.length > 0) {
+            resultText += ` Получено: ${effects.join(', ')}.`;
+        }
+    }
+    
+    resultText += ` Следующее событие произойдет через ${choice.timeCost === 1 ? '1 день' : `${choice.timeCost} дня`}.`;
     
     description.textContent = resultText;
     choices.innerHTML = `
@@ -509,10 +563,20 @@ function showChoiceResult(choice, diceRoll) {
         </button>
     `;
     
-    updateMoneyDisplay();
-    
     // Синхронизируем с сервером
-    syncChoiceWithServer(choice, diceRoll);
+    syncChoiceWithServer(choice.id, eventKey);
+}
+
+// Планирование следующего события
+function scheduleNextEvent(timeCostDays) {
+    // Переводим дни в минуты игрового времени (1 день = 1 минута)
+    const delayMinutes = timeCostDays * 1;
+    
+    // Сбрасываем текущий таймер событий
+    eventTimeLeft = delayMinutes * 60; // переводим в секунды
+    nextEventTime = eventTimeLeft;
+    
+    console.log(`Следующее событие запланировано через ${timeCostDays} дня (${delayMinutes} минут игрового времени)`);
 }
 
 // Продолжить игру
@@ -569,7 +633,10 @@ function syncTimeWithServer() {
 }
 
 // Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
+    // Загружаем события из базы данных
+    await loadEventConfigs();
+    
     // Инициализируем значения из Django (если доступны)
     if (typeof gameTimerData !== 'undefined') {
         currentGameTime = gameTimerData.gameTime || 480;
@@ -620,6 +687,47 @@ const skillTypes = [
     { type: 'pitching', icon: '🎯', name: 'Питчинг' },
     { type: 'team', icon: '👥', name: 'Тимбилдинг' }
 ];
+
+// Конфигурация событий (будет загружена из API)
+let eventConfigs = {};
+
+// Загрузка событий из базы данных
+async function loadEventConfigs() {
+    try {
+        const response = await fetch('/game/api/events/');
+        if (response.ok) {
+            eventConfigs = await response.json();
+            console.log('События загружены из базы данных:', Object.keys(eventConfigs));
+        } else {
+            console.error('Ошибка загрузки событий:', response.status);
+            // Fallback к старым событиям если API недоступен
+            loadFallbackEvents();
+        }
+    } catch (error) {
+        console.error('Ошибка соединения при загрузке событий:', error);
+        loadFallbackEvents();
+    }
+}
+
+// Запасная конфигурация событий
+function loadFallbackEvents() {
+    eventConfigs = {
+        market_research: {
+            title: 'Исследование рынка',
+            description: 'У вас есть возможность провести исследование рынка. Какой подход выберете?',
+            choices: [
+                {
+                    id: 'survey',
+                    text: 'Провести онлайн-опрос',
+                    description: 'Быстро и недорого',
+                    timeCost: 1,
+                    moneyCost: 50,
+                    effects: { reputation: 2, customers: 5 }
+                }
+            ]
+        }
+    };
+}
 
 // Текущие значения навыков
 let currentSkills = {

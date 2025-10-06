@@ -337,6 +337,55 @@ body {
         border: 3px solid white;
     }
 }
+
+/* Стили для кнопок событий с затратами */
+.event-choice {
+    text-align: left !important;
+    padding: 15px !important;
+    margin-bottom: 10px !important;
+}
+
+.choice-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+}
+
+.choice-description {
+    font-size: 14px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 8px;
+}
+
+.choice-costs {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.time-cost {
+    color: #ffc107;
+}
+
+.money-cost {
+    color: #28a745;
+}
+
+/* Мобильная адаптация для кнопок событий */
+@media (max-width: 768px) {
+    .choice-title {
+        font-size: 14px;
+    }
+    
+    .choice-description {
+        font-size: 12px;
+    }
+    
+    .choice-costs {
+        font-size: 11px;
+    }
+}
 </style>
 {% endblock %}
 

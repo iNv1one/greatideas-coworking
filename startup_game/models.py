@@ -120,3 +120,64 @@ class UserAchievement(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.achievement.name}"
+
+
+class EventTemplate(models.Model):
+    """Шаблоны событий для админки"""
+    key = models.CharField(max_length=50, unique=True, help_text="Уникальный ключ события (например: market_research)")
+    title = models.CharField(max_length=200, help_text="Заголовок события")
+    description = models.TextField(help_text="Описание ситуации")
+    is_active = models.BooleanField(default=True, help_text="Активно ли событие")
+    order = models.IntegerField(default=0, help_text="Порядок появления (меньше = раньше)")
+    
+    class Meta:
+        verbose_name = 'Шаблон события'
+        verbose_name_plural = 'Шаблоны событий'
+        ordering = ['order', 'title']
+    
+    def __str__(self):
+        return self.title
+
+
+class EventChoice(models.Model):
+    """Варианты выбора для событий"""
+    event_template = models.ForeignKey(EventTemplate, on_delete=models.CASCADE, related_name='choices')
+    choice_id = models.CharField(max_length=50, help_text="ID выбора (например: survey)")
+    title = models.CharField(max_length=200, help_text="Текст кнопки")
+    description = models.CharField(max_length=300, help_text="Краткое описание действия")
+    
+    # Затраты
+    time_cost = models.IntegerField(default=1, help_text="Стоимость в днях (1 день = 1 минута)")
+    money_cost = models.IntegerField(default=0, help_text="Стоимость в деньгах")
+    
+    # Эффекты
+    money_effect = models.IntegerField(default=0, help_text="Изменение денег")
+    reputation_effect = models.IntegerField(default=0, help_text="Изменение репутации")
+    employees_effect = models.IntegerField(default=0, help_text="Изменение сотрудников")
+    customers_effect = models.IntegerField(default=0, help_text="Изменение клиентов")
+    
+    # Навыки
+    prototype_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка разработки")
+    presentation_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка презентаций")
+    pitching_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка питчинга")
+    team_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка тимбилдинга")
+    
+    # Стиль кнопки
+    BUTTON_STYLES = [
+        ('btn-primary', 'Синяя'),
+        ('btn-secondary', 'Серая'),
+        ('btn-success', 'Зеленая'),
+        ('btn-danger', 'Красная'),
+        ('btn-warning', 'Желтая'),
+        ('btn-info', 'Голубая'),
+    ]
+    button_style = models.CharField(max_length=20, choices=BUTTON_STYLES, default='btn-primary')
+    order = models.IntegerField(default=0, help_text="Порядок отображения")
+    
+    class Meta:
+        verbose_name = 'Вариант выбора'
+        verbose_name_plural = 'Варианты выбора'
+        ordering = ['event_template', 'order', 'title']
+    
+    def __str__(self):
+        return f"{self.event_template.title} - {self.title}"

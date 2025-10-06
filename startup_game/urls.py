@@ -14,4 +14,5 @@ urlpatterns = [
     path('api/sync-time/', views.sync_time, name='sync_time'),
     path('api/choice/', views.process_choice, name='process_choice'),
     path('api/skill/', views.game_skill_api, name='game_skill_api'),
+    path('api/events/', views.get_events_api, name='get_events_api'),
 ]
