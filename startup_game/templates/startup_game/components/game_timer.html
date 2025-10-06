@@ -738,6 +738,7 @@ async function loadEventConfigs() {
             // Новый формат API: { events: {...}, availableSkills: [...] }
             if (apiData.events && apiData.availableSkills) {
                 eventConfigs = apiData.events;
+                window.eventConfigs = apiData.events; // Глобально доступные события
                 availableSkills = apiData.availableSkills;
                 window.availableSkills = apiData.availableSkills; // Глобально доступные навыки
                 console.log('События загружены из базы данных:', Object.keys(eventConfigs));
@@ -748,6 +749,7 @@ async function loadEventConfigs() {
             } else {
                 // Старый формат API - только события
                 eventConfigs = apiData;
+                window.eventConfigs = apiData; // Глобально доступные события
                 availableSkills = [];
                 window.availableSkills = [];
                 console.log('События загружены (старый формат):', Object.keys(eventConfigs));
@@ -773,6 +775,9 @@ function loadFallbackEvents() {
     // Загружаем fallback навыки из локального массива
     availableSkills = [...skillTypes];
     window.availableSkills = [...skillTypes];
+    
+    // Очищаем события для fallback (пустой объект)
+    window.eventConfigs = {};
     
     // Уведомляем об обновлении навыков (fallback навыки)
     window.dispatchEvent(new CustomEvent('skillsLoaded', { detail: [...skillTypes] }));
