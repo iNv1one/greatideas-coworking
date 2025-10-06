@@ -1,5 +1,31 @@
 from django.contrib import admin
+from django import forms
 from .models import GameSession, GameEvent, Achievement, UserAchievement, EventTemplate, EventChoice, Skill, CompletedEvent
+
+
+class EventTemplateAdminForm(forms.ModelForm):
+    class Meta:
+        model = EventTemplate
+        fields = '__all__'
+        widgets = {
+            'parent_choices': forms.Textarea(attrs={
+                'rows': 2, 
+                'placeholder': 'Например: friends, presentation, prototype',
+                'help_text': 'ID выборов через запятую'
+            }),
+        }
+
+class EventChoiceAdminForm(forms.ModelForm):
+    class Meta:
+        model = EventChoice
+        fields = '__all__'
+        widgets = {
+            'next_events': forms.Textarea(attrs={
+                'rows': 2, 
+                'placeholder': 'Например: friends_feedback, investor_meeting',
+                'help_text': 'Ключи событий через запятую'
+            }),
+        }
 
 
 @admin.register(GameSession)
@@ -36,6 +62,7 @@ class EventChoiceInline(admin.TabularInline):
     fields = [
         'choice_id', 'title', 'description', 'order',
         'time_cost', 'money_cost', 'button_style', 'skills',
+        'next_events', 'next_event_delay',  # Новые поля для связанных событий
         'money_effect', 'reputation_effect', 'employees_effect', 'customers_effect',
         'prototype_skill_effect', 'presentation_skill_effect', 'pitching_skill_effect', 'team_skill_effect', 'marketing_skill_effect'
     ]
@@ -44,8 +71,9 @@ class EventChoiceInline(admin.TabularInline):
 
 @admin.register(EventTemplate)
 class EventTemplateAdmin(admin.ModelAdmin):
-    list_display = ['title', 'key', 'is_active', 'order']
-    list_filter = ['is_active']
+    form = EventTemplateAdminForm
+    list_display = ['title', 'key', 'trigger_type', 'min_day', 'max_day', 'is_active', 'order']
+    list_filter = ['is_active', 'trigger_type', 'min_day']
     search_fields = ['title', 'key', 'description']
     inlines = [EventChoiceInline]
     
@@ -53,7 +81,19 @@ class EventTemplateAdmin(admin.ModelAdmin):
         ('Основная информация', {
             'fields': ('key', 'title', 'description')
         }),
-        ('Настройки', {
+        ('Тип события', {
+            'fields': ('trigger_type',),
+            'description': 'Определяет как и когда срабатывает событие'
+        }),
+        ('Настройки случайных событий', {
+            'fields': ('random_chance', 'min_day', 'max_day'),
+            'description': 'Используется только для случайных событий (trigger_type=random)'
+        }),
+        ('Настройки связанных событий', {
+            'fields': ('parent_choices',),
+            'description': 'Используется для инициируемых событий (trigger_type=triggered). Укажите ID выборов через запятую'
+        }),
+        ('Общие настройки', {
             'fields': ('is_active', 'order')
         }),
     )
@@ -61,6 +101,7 @@ class EventTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(EventChoice)
 class EventChoiceAdmin(admin.ModelAdmin):
+    form = EventChoiceAdminForm
     list_display = ['event_template', 'title', 'time_cost', 'money_cost', 'order']
     list_filter = ['event_template', 'time_cost', 'button_style']
     search_fields = ['title', 'description', 'event_template__title']
@@ -71,6 +112,10 @@ class EventChoiceAdmin(admin.ModelAdmin):
         }),
         ('Затраты', {
             'fields': ('time_cost', 'money_cost')
+        }),
+        ('Связанные события', {
+            'fields': ('next_events', 'next_event_delay'),
+            'description': 'Укажите ключи событий через запятую для создания цепочки событий'
         }),
         ('Эффекты на игру', {
             'fields': ('money_effect', 'reputation_effect', 'employees_effect', 'customers_effect')
