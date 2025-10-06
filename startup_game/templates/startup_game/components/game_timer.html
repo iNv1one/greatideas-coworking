@@ -655,8 +655,8 @@ function createSkillOrb() {
     orb.style.left = leftPosition + 'px';
     
     // Добавляем обработчик клика
-    orb.addEventListener('click', function() {
-        handleSkillOrbClick(orb, skillType);
+    orb.addEventListener('click', function(event) {
+        handleSkillOrbClick(orb, skillType, event);
     });
     
     // Добавляем в DOM
@@ -676,21 +676,25 @@ function createSkillOrb() {
 }
 
 // Обработка клика по кружочку
-function handleSkillOrbClick(orb, skillType) {
+function handleSkillOrbClick(orb, skillType, event) {
     // Предотвращаем повторные клики
     orb.style.pointerEvents = 'none';
     orb.classList.add('clicked');
     
-    // ВАЖНО: Сразу фиксируем текущую позицию кружочка
-    const orbRect = orb.getBoundingClientRect();
-    const currentX = orbRect.left + orbRect.width/2;
-    const currentY = orbRect.top + orbRect.height/2;
+    // ВАЖНО: Используем реальные координаты клика мышью
+    const clickX = event.clientX; // X координата клика
+    const clickY = event.clientY; // Y координата клика
     
-    // Останавливаем базовую анимацию подъема и фиксируем позицию
+    // Получаем реальный размер кружочка для правильного позиционирования
+    const orbRect = orb.getBoundingClientRect();
+    const halfWidth = orbRect.width / 2;
+    const halfHeight = orbRect.height / 2;
+    
+    // Останавливаем базовую анимацию подъема и фиксируем позицию В ТОЧКЕ КЛИКА
     orb.style.animation = 'none';
     orb.style.position = 'fixed';
-    orb.style.left = currentX - orbRect.width/2 + 'px';
-    orb.style.top = currentY - orbRect.height/2 + 'px';
+    orb.style.left = clickX - halfWidth + 'px';
+    orb.style.top = clickY - halfHeight + 'px';
     orb.style.bottom = 'auto';
     
     // Небольшая анимация нажатия
@@ -717,8 +721,8 @@ function handleSkillOrbClick(orb, skillType) {
             skillElement.classList.remove('pulse');
         }, 600);
         
-        // Анимируем полет кружочка к навыку (с уже зафиксированной позицией)
-        animateOrbToSkill(orb, skillElement, currentX, currentY);
+        // Анимируем полет кружочка к навыку (с координатами клика)
+        animateOrbToSkill(orb, skillElement, clickX, clickY);
     }
     
     // Удаляем кружочек из массива активных
@@ -732,21 +736,24 @@ function handleSkillOrbClick(orb, skillType) {
 }
 
 // Анимация полета кружочка к навыку
-function animateOrbToSkill(orb, skillElement, startX, startY) {
+function animateOrbToSkill(orb, skillElement, clickX, clickY) {
     // Получаем позицию навыка (куда летит)
     const skillRect = skillElement.getBoundingClientRect(); 
     const endX = skillRect.left + skillRect.width/2;
     const endY = skillRect.top + skillRect.height/2;
     
-    // Кружочек уже зафиксирован в правильной позиции в handleSkillOrbClick
+    // Кружочек уже зафиксирован в точке клика в handleSkillOrbClick
     // Запускаем анимацию полета
     orb.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     
-    // Через небольшую задержку запускаем полет
+    // Через небольшую задержку запускаем полет от точки клика к навыку
     setTimeout(() => {
         const orbRect = orb.getBoundingClientRect();
-        orb.style.left = endX - orbRect.width/2 + 'px';
-        orb.style.top = endY - orbRect.height/2 + 'px';
+        const halfWidth = orbRect.width / 2;
+        const halfHeight = orbRect.height / 2;
+        
+        orb.style.left = endX - halfWidth + 'px';
+        orb.style.top = endY - halfHeight + 'px';
         orb.style.transform = 'scale(0.3)';
         orb.style.opacity = '0.7';
     }, 150);
