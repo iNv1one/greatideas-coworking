@@ -1149,15 +1149,28 @@ function createSkillsUI() {
         
         const skillElement = document.createElement('div');
         skillElement.className = `skill-item-small ${skillType} mb-2`;
+        
+        // Создаем основную структуру
         skillElement.innerHTML = `
-            <div class="skill-icon-small">
-                ${skillIcon}
-            </div>
+            <div class="skill-icon-small"></div>
             <div class="skill-info-small">
                 <div class="skill-value-small" id="${skillType}-skill">${currentSkills[skillType]}</div>
                 <div class="skill-label-small">${skillName}</div>
             </div>
         `;
+        
+        // Правильно вставляем иконку
+        const iconContainer = skillElement.querySelector('.skill-icon-small');
+        if (skillIcon && skillIcon.includes('bi-')) {
+            // Bootstrap иконка
+            const iconElement = document.createElement('i');
+            iconElement.className = `bi ${skillIcon}`;
+            iconElement.style.fontSize = '18px';
+            iconContainer.appendChild(iconElement);
+        } else {
+            // Эмоджи или текст
+            iconContainer.textContent = skillIcon || '⭐';
+        }
         
         skillsContainer.appendChild(skillElement);
     });
