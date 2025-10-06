@@ -329,7 +329,6 @@ document.addEventListener('DOMContentLoaded', function() {
             // Добавляем выделение к выбранной опции
             if (this.checked) {
                 this.parentElement.classList.add('selected');
-                continueBtn.disabled = false;
                 
                 // Прокручиваем к выбранному элементу
                 this.parentElement.scrollIntoView({
@@ -337,6 +336,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     block: 'nearest',
                     inline: 'center'
                 });
+                
+                // Активируем кнопку через 2 секунды для предотвращения случайных кликов
+                let countdown = 2;
+                continueBtn.innerHTML = `<i class="fas fa-clock me-2"></i>Подождите ${countdown} сек...`;
+                
+                const countdownInterval = setInterval(() => {
+                    countdown--;
+                    if (countdown > 0) {
+                        continueBtn.innerHTML = `<i class="fas fa-clock me-2"></i>Подождите ${countdown} сек...`;
+                    } else {
+                        clearInterval(countdownInterval);
+                        continueBtn.disabled = false;
+                        continueBtn.innerHTML = `<i class="fas fa-arrow-right me-2"></i>Продолжить`;
+                    }
+                }, 1000);
             }
         });
     });

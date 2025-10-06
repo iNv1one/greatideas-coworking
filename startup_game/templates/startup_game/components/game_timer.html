@@ -768,8 +768,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateGameTimer(currentGameTime, currentGameDay);
     updateMoneyDisplay();
     
-    // Инициализируем событийный таймер
-    eventTimeLeft = 1; // Первое событие сразу через 1 секунду
+    // Инициализируем событийный таймер (первое событие отключено)
+    eventTimeLeft = 600; // Первое событие через 10 минут игрового времени
     nextEventTime = eventTimeLeft;
     
     startGameTimer();
