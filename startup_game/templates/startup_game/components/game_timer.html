@@ -698,6 +698,16 @@ function syncTimeWithServer() {
 
 // Инициализация при загрузке
 document.addEventListener('DOMContentLoaded', async function() {
+    // Проверяем загрузку Bootstrap Icons
+    console.log('Checking Bootstrap Icons availability...');
+    const testIcon = document.createElement('i');
+    testIcon.className = 'bi bi-heart';
+    testIcon.style.display = 'none';
+    document.body.appendChild(testIcon);
+    const iconStyles = window.getComputedStyle(testIcon);
+    console.log('Bootstrap Icons font-family:', iconStyles.fontFamily);
+    document.body.removeChild(testIcon);
+    
     // Загружаем события из базы данных
     await loadEventConfigs();
     
@@ -917,13 +927,17 @@ function createSkillOrb() {
     orb.className = `skill-orb ${skillType.type}`;
     
     // Правильно отображаем иконки (Bootstrap Icons или эмоджи)
-    if (skillType.icon && skillType.icon.startsWith('bi-')) {
+    console.log('Creating orb for skill:', skillType.type, 'with icon:', skillType.icon);
+    if (skillType.icon && skillType.icon.includes('bi-')) {
         // Bootstrap иконка
+        console.log('Creating Bootstrap icon with classes:', `bi ${skillType.icon}`);
         const iconElement = document.createElement('i');
         iconElement.className = `bi ${skillType.icon}`;
+        iconElement.style.fontSize = '20px'; // Устанавливаем размер иконки
         orb.appendChild(iconElement);
     } else {
         // Эмоджи или текст
+        console.log('Using emoji/text icon:', skillType.icon);
         orb.textContent = skillType.icon || '⭐';
     }
     
