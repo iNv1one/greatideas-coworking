@@ -231,6 +231,7 @@ function updateEventProgress() {
     
     // Если время вышло, показываем событие
     if (eventTimeLeft <= 0) {
+        console.log('Event timer reached 0, triggering random event...');
         triggerRandomEvent();
     }
 }
@@ -253,22 +254,40 @@ function checkForEvents() {
 
 // Запуск случайного события из базы данных
 function triggerRandomEvent() {
+    console.log('=== triggerRandomEvent called ===');
+    console.log('window.eventConfigs:', window.eventConfigs);
+    console.log('eventConfigs keys:', window.eventConfigs ? Object.keys(window.eventConfigs) : 'undefined');
+    
     // Если события из API загружены, используем их
     if (window.eventConfigs && Object.keys(window.eventConfigs).length > 0) {
         const eventKeys = Object.keys(window.eventConfigs);
+        console.log('Available event keys:', eventKeys);
+        
         // Фильтруем события которые еще не происходили
-        const availableEvents = eventKeys.filter(key => !hasEventOccurred(key));
+        const availableEvents = eventKeys.filter(key => {
+            const occurred = hasEventOccurred(key);
+            console.log(`Event ${key} occurred:`, occurred);
+            return !occurred;
+        });
+        
+        console.log('Available events (not occurred):', availableEvents);
         
         if (availableEvents.length > 0) {
             const randomEvent = availableEvents[Math.floor(Math.random() * availableEvents.length)];
+            console.log('Selected random event:', randomEvent);
             triggerEvent(randomEvent);
             return;
+        } else {
+            console.log('All events have already occurred!');
         }
+    } else {
+        console.log('No API events found, using fallback');
     }
     
     // Fallback: старая система
     const events = ['market_research', 'investor_meeting', 'team_building', 'product_launch'];
     const randomEvent = events[Math.floor(Math.random() * events.length)];
+    console.log('Fallback event selected:', randomEvent);
     triggerEvent(randomEvent);
 }
 
@@ -279,15 +298,23 @@ function hasEventOccurred(eventId) {
 
 // Запуск события
 function triggerEvent(eventId) {
+    console.log('=== triggerEvent called ===');
+    console.log('Event ID:', eventId);
+    console.log('window.eventConfigs:', window.eventConfigs);
+    console.log('Event exists in API:', window.eventConfigs && window.eventConfigs[eventId]);
+    
     gamePaused = true;
     stopSkillOrbSystem();
     localStorage.setItem('event_' + eventId, 'true');
     
     // Сначала проверяем события из API
     if (window.eventConfigs && window.eventConfigs[eventId]) {
+        console.log('Showing API event:', eventId);
         showEvent(eventId);
         return;
     }
+    
+    console.log('Using fallback events for:', eventId);
     
     // Fallback: старые события
     if (eventId === 'startup_idea') {
