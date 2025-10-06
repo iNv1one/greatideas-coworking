@@ -232,6 +232,109 @@ body {
         font-size: 7px;
     }
 }
+
+/* Стили для кружочков навыков в геймплее */
+.skill-orb {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s ease;
+    animation: float-up 5s linear;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: white;
+    font-weight: bold;
+}
+
+.skill-orb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+.skill-orb.clicked {
+    animation: fly-to-skill 0.8s ease-out forwards;
+}
+
+/* Цвета кружочков соответствуют навыкам */
+.skill-orb.prototype { 
+    background: linear-gradient(135deg, #4CAF50, #2E7D32); 
+}
+.skill-orb.presentation { 
+    background: linear-gradient(135deg, #2196F3, #1976D2); 
+}
+.skill-orb.pitching { 
+    background: linear-gradient(135deg, #FF9800, #F57C00); 
+}
+.skill-orb.team { 
+    background: linear-gradient(135deg, #E91E63, #C2185B); 
+}
+
+/* Анимация подъема кружочка снизу экрана */
+@keyframes float-up {
+    0% {
+        bottom: -50px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        bottom: 100vh;
+        opacity: 0;
+    }
+}
+
+/* Анимация полета к навыку */
+@keyframes fly-to-skill {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(0.8);
+    }
+    100% {
+        transform: scale(0.3);
+        opacity: 0;
+    }
+}
+
+/* Эффект пульсации при получении очка навыка */
+.skill-item-small.pulse {
+    animation: skill-pulse 0.6s ease;
+}
+
+@keyframes skill-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,255,255,0.5); }
+    100% { transform: scale(1); }
+}
+
+/* Мобильная адаптация для кружочков */
+@media (max-width: 768px) {
+    .skill-orb {
+        width: 35px;
+        height: 35px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .skill-orb {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+}
 </style>
 {% endblock %}
 
@@ -248,6 +351,18 @@ window.gameTimerData.gameTime = parseInt(sessionData.game_time || 480);
 window.gameTimerData.gameDay = parseInt(sessionData.day || 1);
 window.gameTimerData.currentMoney = parseInt(sessionData.money || 500);
 window.gameTimerData.gamePaused = sessionData.game_paused || false;
+
+// Передаем навыки
+if (sessionData.skills) {
+    window.gameTimerData.skills = sessionData.skills;
+} else {
+    window.gameTimerData.skills = {
+        prototype: 0,
+        presentation: 0,
+        pitching: 0,
+        team: 0
+    };
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     window.gameData = {

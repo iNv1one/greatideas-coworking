@@ -493,6 +493,47 @@ def generate_random_event(session):
 
 
 @login_required
+@csrf_exempt
+def game_skill_api(request):
+    """API для сохранения навыков"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Only POST method allowed'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        skill_type = data.get('skill_type')
+        value = data.get('value')
+        
+        if not skill_type or value is None:
+            return JsonResponse({'error': 'Missing skill_type or value'}, status=400)
+        
+        session = get_object_or_404(GameSession, user=request.user, is_active=True)
+        
+        # Обновляем соответствующий навык
+        if skill_type == 'prototype':
+            session.prototype_skill = value
+        elif skill_type == 'presentation':
+            session.presentation_skill = value
+        elif skill_type == 'pitching':
+            session.pitching_skill = value
+        elif skill_type == 'team':
+            session.team_skill = value
+        else:
+            return JsonResponse({'error': 'Invalid skill_type'}, status=400)
+        
+        session.save()
+        
+        return JsonResponse({
+            'success': True,
+            'skill_type': skill_type,
+            'value': value
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
 def game_stats(request):
     """Статистика игры"""
     sessions = GameSession.objects.filter(user=request.user).order_by('-updated_at')
