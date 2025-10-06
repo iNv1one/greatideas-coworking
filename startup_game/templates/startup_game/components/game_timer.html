@@ -371,6 +371,7 @@ function showStartupIdeaEvent() {
 
 // Создание модального окна для событий
 function createEventModal() {
+    console.log('Creating modal HTML...');
     const modalHTML = `
         <div class="modal fade" id="eventModal" tabindex="-1" data-bs-backdrop="static">
             <div class="modal-dialog modal-lg">
@@ -391,24 +392,35 @@ function createEventModal() {
         <div class="modal-backdrop fade show" id="eventModalBackdrop"></div>
     `;
     
+    console.log('Inserting modal HTML into body...');
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+    console.log('Modal HTML inserted');
 }
 
 // Универсальная функция для отображения событий
 function showEvent(eventKey) {
+    console.log('=== showEvent called ===');
+    console.log('Event key:', eventKey);
+    console.log('eventConfigs:', eventConfigs);
+    
     const config = eventConfigs[eventKey];
     if (!config) {
         console.error('Event config not found:', eventKey);
         return;
     }
     
+    console.log('Event config found:', config);
+    
     let modal = document.getElementById('eventModal');
     if (modal) {
+        console.log('Removing existing modal');
         modal.remove();
     }
     
+    console.log('Creating event modal...');
     createEventModal();
     modal = document.getElementById('eventModal');
+    console.log('Modal created:', modal);
     
     const title = document.getElementById('eventTitle');
     const description = document.getElementById('eventDescription');
@@ -438,9 +450,13 @@ function showEvent(eventKey) {
     
     choices.innerHTML = choicesHTML;
     
+    console.log('Setting modal visibility...');
     modal.style.display = 'block';
     modal.classList.add('show');
     document.body.classList.add('modal-open');
+    console.log('Modal should be visible now. Modal element:', modal);
+    console.log('Modal display style:', modal.style.display);
+    console.log('Modal classes:', modal.className);
 }
 
 // Функция для определения класса кнопки
