@@ -184,12 +184,12 @@ def game_play(request):
             if hasattr(session, 'dice_roll'):
                 session_data['dice_roll'] = session.dice_roll
             
-            # Добавляем навыки (пока статичные значения)
+            # Добавляем навыки из базы данных
             session_data['skills'] = {
-                'prototype': 5,
-                'presentation': 3,
-                'pitching': 2,
-                'team': 1
+                'prototype': getattr(session, 'prototype_skill', 0),
+                'presentation': getattr(session, 'presentation_skill', 0),
+                'pitching': getattr(session, 'pitching_skill', 0),
+                'team': getattr(session, 'team_skill', 0)
             }
         
         context = {

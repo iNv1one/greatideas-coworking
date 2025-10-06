@@ -578,15 +578,22 @@ document.addEventListener('DOMContentLoaded', function() {
         currentMoney = gameTimerData.currentMoney || 500;
         
         // Инициализируем навыки из сессии
-        if (gameTimerData.skills) {
+        if (gameTimerData.skills && currentGameDay > 1) {
+            // Загружаем сохраненные навыки только если игра не новая
             currentSkills.prototype = gameTimerData.skills.prototype || 0;
             currentSkills.presentation = gameTimerData.skills.presentation || 0;
             currentSkills.pitching = gameTimerData.skills.pitching || 0;
             currentSkills.team = gameTimerData.skills.team || 0;
-            
-            // Обновляем UI с текущими значениями навыков
-            updateSkillsUI();
+        } else {
+            // Для новой игры (день 1) принудительно сбрасываем навыки в 0
+            currentSkills.prototype = 0;
+            currentSkills.presentation = 0;
+            currentSkills.pitching = 0;
+            currentSkills.team = 0;
         }
+        
+        // Обновляем UI с текущими значениями навыков
+        updateSkillsUI();
     }
     
     updateGameTimer(currentGameTime, currentGameDay);
@@ -674,6 +681,18 @@ function handleSkillOrbClick(orb, skillType) {
     orb.style.pointerEvents = 'none';
     orb.classList.add('clicked');
     
+    // ВАЖНО: Сразу фиксируем текущую позицию кружочка
+    const orbRect = orb.getBoundingClientRect();
+    const currentX = orbRect.left + orbRect.width/2;
+    const currentY = orbRect.top + orbRect.height/2;
+    
+    // Останавливаем базовую анимацию подъема и фиксируем позицию
+    orb.style.animation = 'none';
+    orb.style.position = 'fixed';
+    orb.style.left = currentX - orbRect.width/2 + 'px';
+    orb.style.top = currentY - orbRect.height/2 + 'px';
+    orb.style.bottom = 'auto';
+    
     // Небольшая анимация нажатия
     orb.style.transform = 'scale(0.9)';
     setTimeout(() => {
@@ -698,8 +717,8 @@ function handleSkillOrbClick(orb, skillType) {
             skillElement.classList.remove('pulse');
         }, 600);
         
-        // Анимируем полет кружочка к навыку
-        animateOrbToSkill(orb, skillElement);
+        // Анимируем полет кружочка к навыку (с уже зафиксированной позицией)
+        animateOrbToSkill(orb, skillElement, currentX, currentY);
     }
     
     // Удаляем кружочек из массива активных
@@ -713,49 +732,37 @@ function handleSkillOrbClick(orb, skillType) {
 }
 
 // Анимация полета кружочка к навыку
-function animateOrbToSkill(orb, skillElement) {
-    // Останавливаем базовую анимацию подъема
-    orb.style.animation = 'none';
-    
-    // Получаем текущую позицию кружочка (откуда он летит)
-    const orbRect = orb.getBoundingClientRect();
-    const startX = orbRect.left + orbRect.width/2;
-    const startY = orbRect.top + orbRect.height/2;
-    
+function animateOrbToSkill(orb, skillElement, startX, startY) {
     // Получаем позицию навыка (куда летит)
-    const skillRect = skillElement.getBoundingClientRect();
+    const skillRect = skillElement.getBoundingClientRect(); 
     const endX = skillRect.left + skillRect.width/2;
     const endY = skillRect.top + skillRect.height/2;
     
-    // Фиксируем кружочек в текущей позиции
-    orb.style.position = 'fixed';
-    orb.style.left = startX - orbRect.width/2 + 'px';
-    orb.style.top = startY - orbRect.height/2 + 'px';
-    orb.style.bottom = 'auto';
-    
+    // Кружочек уже зафиксирован в правильной позиции в handleSkillOrbClick
     // Запускаем анимацию полета
     orb.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     
     // Через небольшую задержку запускаем полет
     setTimeout(() => {
+        const orbRect = orb.getBoundingClientRect();
         orb.style.left = endX - orbRect.width/2 + 'px';
         orb.style.top = endY - orbRect.height/2 + 'px';
         orb.style.transform = 'scale(0.3)';
         orb.style.opacity = '0.7';
-    }, 50);
+    }, 150);
     
     // Финальное исчезновение при достижении цели
     setTimeout(() => {
         orb.style.opacity = '0';
         orb.style.transform = 'scale(0.1)';
-    }, 500);
+    }, 600);
     
     // Удаляем элемент после анимации
     setTimeout(() => {
         if (orb.parentNode) {
             orb.remove();
         }
-    }, 600);
+    }, 700);
 }
 
 // Синхронизация навыка с сервером
