@@ -312,7 +312,8 @@ function triggerEvent(eventId) {
     
     // Тест функций
     console.log('Available functions:');
-    console.log('- showEvent:', typeof showEvent);
+    console.log('- showEvent (old):', typeof showEvent);
+    console.log('- showGameEvent (new):', typeof showGameEvent);
     console.log('- createEventModal:', typeof createEventModal);
     
     gamePaused = true;
@@ -324,12 +325,12 @@ function triggerEvent(eventId) {
     // Сначала проверяем события из API
     if (window.eventConfigs && window.eventConfigs[eventId]) {
         console.log('Showing API event:', eventId);
-        console.log('showEvent function exists:', typeof showEvent);
-        console.log('showEvent function:', showEvent);
+        console.log('showGameEvent function exists:', typeof showGameEvent);
+        console.log('showGameEvent function:', showGameEvent);
         try {
-            showEvent(eventId);
+            showGameEvent(eventId);
         } catch (error) {
-            console.error('Error in showEvent:', error);
+            console.error('Error in showGameEvent:', error);
             console.error('Error stack:', error.stack);
         }
         return;
@@ -410,8 +411,8 @@ function createEventModal() {
 }
 
 // Универсальная функция для отображения событий
-function showEvent(eventKey) {
-    console.log('=== showEvent called ===');
+function showGameEvent(eventKey) {
+    console.log('=== showGameEvent called ===');
     console.log('Event key:', eventKey);
     console.log('eventConfigs:', eventConfigs);
     
@@ -498,22 +499,22 @@ function getButtonClass(choice) {
 
 // Событие "Исследование рынка"
 function showMarketResearchEvent() {
-    showEvent('market_research');
+    showGameEvent('market_research');
 }
 
 // Событие "Встреча с инвестором"
 function showInvestorMeetingEvent() {
-    showEvent('investor_meeting');
+    showGameEvent('investor_meeting');
 }
 
 // Событие "Набор команды"
 function showTeamBuildingEvent() {
-    showEvent('team_building');
+    showGameEvent('team_building');
 }
 
 // Событие "Запуск продукта"
 function showProductLaunchEvent() {
-    showEvent('product_launch');
+    showGameEvent('product_launch');
 }
 
 // Выбор решения
