@@ -556,7 +556,7 @@ def game_skill_api(request):
 @csrf_exempt  
 def get_events_api(request):
     """API для получения событий из базы данных"""
-    from .models import EventTemplate
+    from .models import EventTemplate, Skill
     
     events = EventTemplate.objects.filter(is_active=True).prefetch_related('choices__skills').order_by('order')
     
@@ -613,7 +613,23 @@ def get_events_api(request):
             'choices': choices_data
         }
     
-    return JsonResponse(events_data)
+    # Получаем все доступные навыки из базы данных
+    all_skills = Skill.objects.filter(is_active=True).order_by('order')
+    skills_data = []
+    for skill in all_skills:
+        skills_data.append({
+            'name': skill.name,
+            'displayName': skill.display_name,
+            'color': skill.color,
+            'icon': skill.icon,
+            'sessionField': skill.session_field,
+            'type': skill.session_field  # Добавляем type для совместимости с JavaScript
+        })
+    
+    return JsonResponse({
+        'events': events_data,
+        'availableSkills': skills_data  # Добавляем список всех доступных навыков
+    })
 
 
 @login_required

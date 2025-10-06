@@ -438,15 +438,51 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Обновляем навыки
     updateSkillsDisplay();
+    
+    // Слушаем событие загрузки навыков из API
+    window.addEventListener('skillsLoaded', function(event) {
+        updateSkillsDisplay();
+    });
 });
 
 // Функция обновления отображения навыков
 function updateSkillsDisplay() {
-    if (window.gameData && window.gameData.skills) {
-        document.getElementById('prototype-skill').textContent = window.gameData.skills.prototype;
-        document.getElementById('presentation-skill').textContent = window.gameData.skills.presentation;
-        document.getElementById('pitching-skill').textContent = window.gameData.skills.pitching;
-        document.getElementById('team-skill').textContent = window.gameData.skills.team;
+    const skillsContainer = document.getElementById('skillsContainer');
+    const skillsLoading = document.getElementById('skillsLoading');
+    
+    // Проверяем наличие навыков в данных из API
+    if (window.availableSkills && window.availableSkills.length > 0) {
+        // Очищаем контейнер и скрываем загрузку
+        skillsContainer.innerHTML = '';
+        
+        // Создаем HTML для каждого навыка из БД
+        window.availableSkills.forEach(skill => {
+            const currentValue = window.gameData && window.gameData.skills 
+                ? (window.gameData.skills[skill.key] || 0) 
+                : 0;
+                
+            const skillElement = document.createElement('div');
+            skillElement.className = `skill-item-small ${skill.key} mb-2`;
+            skillElement.innerHTML = `
+                <div class="skill-icon-small">
+                    <i class="${skill.icon || 'fas fa-cog'}"></i>
+                </div>
+                <div class="skill-info-small">
+                    <div class="skill-value-small" id="${skill.key}-skill">${currentValue}</div>
+                    <div class="skill-label-small">${skill.name}</div>
+                </div>
+            `;
+            skillsContainer.appendChild(skillElement);
+        });
+    } else {
+        // Если навыков нет в БД, показываем сообщение
+        skillsContainer.innerHTML = `
+            <div class="text-center text-muted">
+                <i class="fas fa-info-circle mb-2"></i>
+                <p>Навыки не настроены</p>
+                <small>Добавьте навыки в админ-панели Django</small>
+            </div>
+        `;
     }
 }
 </script>
@@ -513,43 +549,11 @@ function updateSkillsDisplay() {
             <div class="col-lg-6 col-md-6 col-6">
                 <div class="skills-sidebar">
                     <h6 class="sidebar-title">Навыки</h6>
-                    <div class="skill-item-small prototype mb-2">
-                        <div class="skill-icon-small">
-                            <i class="fas fa-drafting-compass"></i>
-                        </div>
-                        <div class="skill-info-small">
-                            <div class="skill-value-small" id="prototype-skill">0</div>
-                            <div class="skill-label-small">Разработка прототипа</div>
-                        </div>
-                    </div>
-                    
-                    <div class="skill-item-small presentation mb-2">
-                        <div class="skill-icon-small">
-                            <i class="fas fa-presentation"></i>
-                        </div>
-                        <div class="skill-info-small">
-                            <div class="skill-value-small" id="presentation-skill">0</div>
-                            <div class="skill-label-small">Создание презентаций</div>
-                        </div>
-                    </div>
-                    
-                    <div class="skill-item-small pitching mb-2">
-                        <div class="skill-icon-small">
-                            <i class="fas fa-microphone"></i>
-                        </div>
-                        <div class="skill-info-small">
-                            <div class="skill-value-small" id="pitching-skill">0</div>
-                            <div class="skill-label-small">Проведение питчингов</div>
-                        </div>
-                    </div>
-                    
-                    <div class="skill-item-small team mb-2">
-                        <div class="skill-icon-small">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="skill-info-small">
-                            <div class="skill-value-small" id="team-skill">0</div>
-                            <div class="skill-label-small">Набор команды</div>
+                    <div id="skillsContainer">
+                        <!-- Навыки будут загружены динамически из базы данных -->
+                        <div class="text-center text-muted" id="skillsLoading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            Загрузка навыков...
                         </div>
                     </div>
                 </div>

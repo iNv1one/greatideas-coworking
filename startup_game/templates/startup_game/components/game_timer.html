@@ -669,6 +669,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Загружаем события из базы данных
     await loadEventConfigs();
     
+    // Создаем UI навыков на основе загруженных данных
+    createSkillsUI();
+    
     // Инициализируем значения из Django (если доступны)
     if (typeof gameTimerData !== 'undefined') {
         currentGameTime = gameTimerData.gameTime || 480;
@@ -715,24 +718,45 @@ let availableSkills = []; // Навыки, доступные для орбов 
 
 // Определяем навыки с их цветами и иконками (fallback для старой системы)
 const skillTypes = [
-    { type: 'prototype', icon: '⚙️', name: 'Разработка прототипа' },
-    { type: 'presentation', icon: '📊', name: 'Презентации' },
-    { type: 'pitching', icon: '🎯', name: 'Питчинг' },
-    { type: 'team', icon: '👥', name: 'Тимбилдинг' }
+    { key: 'prototype', type: 'prototype', sessionField: 'prototype', icon: '⚙️', name: 'Разработка прототипа' },
+    { key: 'presentation', type: 'presentation', sessionField: 'presentation', icon: '📊', name: 'Презентации' },
+    { key: 'pitching', type: 'pitching', sessionField: 'pitching', icon: '🎯', name: 'Питчинг' },
+    { key: 'team', type: 'team', sessionField: 'team', icon: '👥', name: 'Тимбилдинг' }
 ];
 
 // Конфигурация событий (будет загружена из API)
 let eventConfigs = {};
+// availableSkills уже объявлена выше
 
 // Загрузка событий из базы данных
 async function loadEventConfigs() {
     try {
         const response = await fetch('/game/api/events/');
         if (response.ok) {
-            eventConfigs = await response.json();
-            console.log('События загружены из базы данных:', Object.keys(eventConfigs));
+            const apiData = await response.json();
+            
+            // Новый формат API: { events: {...}, availableSkills: [...] }
+            if (apiData.events && apiData.availableSkills) {
+                eventConfigs = apiData.events;
+                availableSkills = apiData.availableSkills;
+                window.availableSkills = apiData.availableSkills; // Глобально доступные навыки
+                console.log('События загружены из базы данных:', Object.keys(eventConfigs));
+                console.log('Навыки загружены из базы данных:', availableSkills.length);
+                
+                // Уведомляем об обновлении навыков
+                window.dispatchEvent(new CustomEvent('skillsLoaded', { detail: apiData.availableSkills }));
+            } else {
+                // Старый формат API - только события
+                eventConfigs = apiData;
+                availableSkills = [];
+                window.availableSkills = [];
+                console.log('События загружены (старый формат):', Object.keys(eventConfigs));
+                
+                // Уведомляем об обновлении навыков (пустой массив)
+                window.dispatchEvent(new CustomEvent('skillsLoaded', { detail: [] }));
+            }
         } else {
-            console.error('Ошибка загрузки событий:', response.status);
+            console.error('Ошибка загрузки событий:', response.status, response.statusText);
             // Fallback к старым событиям если API недоступен
             loadFallbackEvents();
         }
@@ -744,6 +768,15 @@ async function loadEventConfigs() {
 
 // Запасная конфигурация событий
 function loadFallbackEvents() {
+    console.log('Загружаем fallback события и навыки...');
+    
+    // Загружаем fallback навыки из локального массива
+    availableSkills = [...skillTypes];
+    window.availableSkills = [...skillTypes];
+    
+    // Уведомляем об обновлении навыков (fallback навыки)
+    window.dispatchEvent(new CustomEvent('skillsLoaded', { detail: [...skillTypes] }));
+    
     eventConfigs = {
         market_research: {
             title: 'Исследование рынка',
@@ -783,19 +816,26 @@ function startSkillOrbSystem() {
 // Обновление доступных навыков на основе выбора
 function updateAvailableSkills(choice) {
     if (choice.skills && choice.skills.length > 0) {
-        // Используем навыки из выбора
+        // Используем навыки из выбора (это навыки из базы данных)
         availableSkills = choice.skills.map(skill => ({
-            type: skill.name,
-            icon: skill.icon || getSkillIcon(skill.name),
-            name: skill.displayName,
+            name: skill.name,
+            displayName: skill.displayName,
+            sessionField: skill.sessionField, 
+            icon: skill.icon || getSkillIcon(skill.sessionField),
             color: skill.color,
-            sessionField: skill.sessionField
+            type: skill.sessionField  // Добавляем type для совместимости
         }));
-        console.log('Обновлены доступные навыки:', availableSkills);
+        console.log('Обновлены доступные навыки из выбора:', availableSkills);
     } else {
-        // Fallback: используем все навыки
-        availableSkills = [...skillTypes];
-        console.log('Используются все навыки (fallback)');
+        // Fallback: используем все навыки из API, если есть
+        if (window.apiSkills && window.apiSkills.length > 0) {
+            availableSkills = [...window.apiSkills];
+            console.log('Используются все навыки из API (fallback)');
+        } else {
+            // Последний fallback: старые навыки
+            availableSkills = [...skillTypes];
+            console.log('Используются старые навыки (последний fallback)');
+        }
     }
 }
 
@@ -812,11 +852,25 @@ function getSkillIcon(skillName) {
 
 // Создание кружочка навыка
 function createSkillOrb() {
-    // Используем доступные навыки или fallback
+    // Проверяем есть ли навыки вообще
+    if (availableSkills.length === 0 && skillTypes.length === 0) {
+        console.log('Нет доступных навыков для создания орбов');
+        return;
+    }
+    
+    // Используем доступные навыки из API или fallback
     const skillsToUse = availableSkills.length > 0 ? availableSkills : skillTypes;
     
     // Выбираем случайный навык из доступных
-    const skillType = skillsToUse[Math.floor(Math.random() * skillsToUse.length)];
+    const skillData = skillsToUse[Math.floor(Math.random() * skillsToUse.length)];
+    
+    // Подготавливаем объект навыка в унифицированном формате
+    const skillType = {
+        type: skillData.sessionField || skillData.type,  // Для API используем sessionField, для fallback - type
+        name: skillData.displayName || skillData.name,
+        icon: skillData.icon,
+        color: skillData.color
+    };
     
     // Создаем элемент кружочка
     const orb = document.createElement('div');
@@ -886,20 +940,21 @@ function handleSkillOrbClick(orb, skillType, event) {
     // Увеличиваем навык
     currentSkills[skillType.type]++;
     
-    // Находим соответствующий элемент навыка в UI
-    const skillElement = document.querySelector(`.skill-item-small.${skillType.type}`);
-    if (skillElement) {
+    // Находим соответствующий элемент навыка в UI по ID
+    const skillValue = document.getElementById(`${skillType.type}-skill`);
+    if (skillValue) {
         // Обновляем значение навыка
-        const skillValue = skillElement.querySelector('.skill-value-small');
-        if (skillValue) {
-            skillValue.textContent = currentSkills[skillType.type];
-        }
+        skillValue.textContent = currentSkills[skillType.type];
         
-        // Добавляем эффект пульсации
-        skillElement.classList.add('pulse');
-        setTimeout(() => {
-            skillElement.classList.remove('pulse');
-        }, 600);
+        // Находим родительский элемент для анимации
+        const skillElement = skillValue.closest('.skill-item-small');
+        if (skillElement) {
+            // Добавляем эффект пульсации
+            skillElement.classList.add('pulse');
+            setTimeout(() => {
+                skillElement.classList.remove('pulse');
+            }, 600);
+        }
         
         // Анимируем полет кружочка к навыку (с координатами клика)
         animateOrbToSkill(orb, skillElement, clickX, clickY);
@@ -992,14 +1047,75 @@ function resumeSkillOrbSystem() {
     }
 }
 
+// Создание динамического UI навыков из базы данных
+function createSkillsUI() {
+    const skillsContainer = document.getElementById('skillsContainer');
+    const loadingElement = document.getElementById('skillsLoading');
+    
+    if (!skillsContainer) {
+        console.error('Контейнер навыков не найден');
+        return;
+    }
+    
+    // Убираем индикатор загрузки
+    if (loadingElement) {
+        loadingElement.remove();
+    }
+    
+    // Используем навыки из API или fallback
+    const skillsToRender = window.availableSkills && window.availableSkills.length > 0 ? window.availableSkills : skillTypes;
+    
+    if (skillsToRender.length === 0) {
+        skillsContainer.innerHTML = '<div class="text-center text-muted">Навыки не настроены</div>';
+        return;
+    }
+    
+    skillsContainer.innerHTML = '';
+    
+    skillsToRender.forEach(skill => {
+        const skillType = skill.sessionField || skill.type;
+        const skillName = skill.displayName || skill.name;
+        const skillIcon = skill.icon || getSkillIcon(skillType);
+        
+        // Инициализируем навык в currentSkills если его нет
+        if (currentSkills[skillType] === undefined) {
+            currentSkills[skillType] = 0;
+        }
+        
+        const skillElement = document.createElement('div');
+        skillElement.className = `skill-item-small ${skillType} mb-2`;
+        skillElement.innerHTML = `
+            <div class="skill-icon-small">
+                ${skillIcon}
+            </div>
+            <div class="skill-info-small">
+                <div class="skill-value-small" id="${skillType}-skill">${currentSkills[skillType]}</div>
+                <div class="skill-label-small">${skillName}</div>
+            </div>
+        `;
+        
+        skillsContainer.appendChild(skillElement);
+    });
+    
+    console.log('UI навыков создан для:', skillsToRender.length, 'навыков');
+}
+
 // Обновление UI навыков
 function updateSkillsUI() {
     Object.keys(currentSkills).forEach(skillType => {
-        const skillElement = document.querySelector(`.skill-item-small.${skillType}`);
-        if (skillElement) {
-            const skillValue = skillElement.querySelector('.skill-value-small');
-            if (skillValue) {
-                skillValue.textContent = currentSkills[skillType];
+        // Ищем элемент по ID (более надежно)
+        const skillValue = document.getElementById(`${skillType}-skill`);
+        if (skillValue) {
+            skillValue.textContent = currentSkills[skillType];
+            
+            // Находим родительский элемент для анимации
+            const skillElement = skillValue.closest('.skill-item-small');
+            if (skillElement) {
+                // Добавляем эффект пульсации
+                skillElement.classList.add('pulse');
+                setTimeout(() => {
+                    skillElement.classList.remove('pulse');
+                }, 600);
             }
         }
     });
