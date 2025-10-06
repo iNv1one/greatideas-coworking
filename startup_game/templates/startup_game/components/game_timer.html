@@ -1166,6 +1166,12 @@ function createSkillsUI() {
             const iconElement = document.createElement('i');
             iconElement.className = `bi ${skillIcon}`;
             iconElement.style.fontSize = '18px';
+            
+            // Применяем цвет из настроек навыка
+            if (skill.color) {
+                iconElement.style.color = skill.color;
+            }
+            
             iconContainer.appendChild(iconElement);
         } else {
             // Эмоджи или текст
