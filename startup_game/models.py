@@ -32,6 +32,12 @@ class GameSession(models.Model):
     last_decision = models.CharField(max_length=50, blank=True)  # Последнее решение
     dice_roll = models.IntegerField(default=1)  # Последний бросок кубика (1-6)
     
+    # Навыки персонажа
+    prototype_skill = models.IntegerField(default=0)  # Разработка прототипа
+    presentation_skill = models.IntegerField(default=0)  # Презентации
+    pitching_skill = models.IntegerField(default=0)  # Питчинг
+    team_skill = models.IntegerField(default=0)  # Тимбилдинг
+    
     # Игровое состояние
     is_active = models.BooleanField(default=True)
     game_over = models.BooleanField(default=False)

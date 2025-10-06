@@ -717,30 +717,45 @@ function animateOrbToSkill(orb, skillElement) {
     // Останавливаем базовую анимацию подъема
     orb.style.animation = 'none';
     
+    // Получаем текущую позицию кружочка (откуда он летит)
     const orbRect = orb.getBoundingClientRect();
+    const startX = orbRect.left + orbRect.width/2;
+    const startY = orbRect.top + orbRect.height/2;
+    
+    // Получаем позицию навыка (куда летит)
     const skillRect = skillElement.getBoundingClientRect();
+    const endX = skillRect.left + skillRect.width/2;
+    const endY = skillRect.top + skillRect.height/2;
     
-    // Вычисляем расстояние от текущей позиции кружочка до навыка
-    const deltaX = skillRect.left + skillRect.width/2 - (orbRect.left + orbRect.width/2);
-    const deltaY = skillRect.top + skillRect.height/2 - (orbRect.top + orbRect.height/2);
+    // Фиксируем кружочек в текущей позиции
+    orb.style.position = 'fixed';
+    orb.style.left = startX - orbRect.width/2 + 'px';
+    orb.style.top = startY - orbRect.height/2 + 'px';
+    orb.style.bottom = 'auto';
     
-    // Убираем стандартную анимацию float-up и применяем нашу
-    orb.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-    orb.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.2)`;
-    orb.style.opacity = '0.8';
+    // Запускаем анимацию полета
+    orb.style.transition = 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     
-    // Через полсекунды делаем финальное исчезновение
+    // Через небольшую задержку запускаем полет
+    setTimeout(() => {
+        orb.style.left = endX - orbRect.width/2 + 'px';
+        orb.style.top = endY - orbRect.height/2 + 'px';
+        orb.style.transform = 'scale(0.3)';
+        orb.style.opacity = '0.7';
+    }, 50);
+    
+    // Финальное исчезновение при достижении цели
     setTimeout(() => {
         orb.style.opacity = '0';
-        orb.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
-    }, 600);
+        orb.style.transform = 'scale(0.1)';
+    }, 500);
     
     // Удаляем элемент после анимации
     setTimeout(() => {
         if (orb.parentNode) {
             orb.remove();
         }
-    }, 800);
+    }, 600);
 }
 
 // Синхронизация навыка с сервером
