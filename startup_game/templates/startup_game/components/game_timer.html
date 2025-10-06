@@ -391,7 +391,6 @@ function createEventModal() {
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title" id="eventTitle">Событие</h5>
-                        <button type="button" class="btn-close" onclick="continueGame()" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
                         <p id="eventDescription">Описание события</p>
@@ -770,7 +769,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     updateMoneyDisplay();
     
     // Инициализируем событийный таймер
-    eventTimeLeft = 15 + Math.random() * 10; // 15-25 секунд до первого события
+    eventTimeLeft = 1; // Первое событие сразу через 1 секунду
     nextEventTime = eventTimeLeft;
     
     startGameTimer();

@@ -131,6 +131,49 @@ body {
     box-shadow: none;
 }
 
+/* Стили для статистик индустрий */
+.industry-stats {
+    margin-top: 15px;
+    text-align: left;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.8rem;
+}
+
+.stat-label {
+    min-width: 80px;
+    color: #666;
+    font-size: 0.75rem;
+}
+
+.stat-bar {
+    flex: 1;
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    margin: 0 8px;
+    overflow: hidden;
+}
+
+.stat-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FF6B35, #F39C12);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.stat-value {
+    min-width: 35px;
+    text-align: right;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 0.75rem;
+}
+
 @media (max-width: 768px) {
     .game-dialog {
         padding: 30px 20px;
@@ -143,6 +186,14 @@ body {
     
     .industry-option {
         padding: 15px;
+    }
+    
+    .stat-item {
+        font-size: 0.7rem;
+    }
+    
+    .stat-label, .stat-value {
+        font-size: 0.7rem;
     }
 }
 </style>
@@ -160,54 +211,59 @@ body {
         <form method="post" id="industryForm">
             {% csrf_token %}
             <div class="industry-grid">
-                <label class="industry-option" for="industry_IT">
-                    <input type="radio" name="industry" value="IT" id="industry_IT">
+                {% for industry in industry_previews %}
+                <label class="industry-option" for="industry_{{ industry.code }}">
+                    <input type="radio" name="industry" value="{{ industry.code }}" id="industry_{{ industry.code }}">
                     <div class="industry-icon">
-                        <i class="fas fa-code"></i>
+                        {% if industry.code == 'IT' %}<i class="fas fa-code"></i>
+                        {% elif industry.code == 'FOOD' %}<i class="fas fa-utensils"></i>
+                        {% elif industry.code == 'RETAIL' %}<i class="fas fa-shopping-cart"></i>
+                        {% elif industry.code == 'HEALTH' %}<i class="fas fa-heartbeat"></i>
+                        {% elif industry.code == 'EDUCATION' %}<i class="fas fa-graduation-cap"></i>
+                        {% endif %}
                     </div>
-                    <div class="industry-title">IT / Технологии</div>
-                    <div class="industry-description">
-                        Разработка программного обеспечения, мобильных приложений и веб-сервисов
+                    <div class="industry-title">{{ industry.name }}</div>
+                    
+                    <!-- Характеристики индустрии -->
+                    <div class="industry-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Конкуренция</span>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: {{ industry.stats.competition }}0%"></div>
+                            </div>
+                            <span class="stat-value">{{ industry.stats.competition }}/10</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Регулирование</span>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: {{ industry.stats.regulatory_barriers }}0%"></div>
+                            </div>
+                            <span class="stat-value">{{ industry.stats.regulatory_barriers }}/10</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Прибыльность</span>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: {{ industry.stats.profitability }}0%"></div>
+                            </div>
+                            <span class="stat-value">{{ industry.stats.profitability }}/10</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Стоимость входа</span>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: {{ industry.stats.entry_cost }}0%"></div>
+                            </div>
+                            <span class="stat-value">{{ industry.stats.entry_cost }}/10</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Потенциал роста</span>
+                            <div class="stat-bar">
+                                <div class="stat-fill" style="width: {{ industry.stats.growth_potential }}0%"></div>
+                            </div>
+                            <span class="stat-value">{{ industry.stats.growth_potential }}/10</span>
+                        </div>
                     </div>
                 </label>
-                
-                <label class="industry-option" for="industry_FOOD">
-                    <input type="radio" name="industry" value="FOOD" id="industry_FOOD">
-                    <div class="industry-icon">
-                        <i class="fas fa-utensils"></i>
-                    </div>
-                    <div class="industry-title">Еда и рестораны</div>
-                    <div class="industry-description">
-                        Кафе, рестораны, доставка еды и пищевое производство
-                    </div>
-                </label>
-                
-                <label class="industry-option" for="industry_RETAIL">
-                    <input type="radio" name="industry" value="RETAIL" id="industry_RETAIL">
-                    <div class="industry-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="industry-title">Розничная торговля</div>
-                    <div class="industry-description">
-                        Магазины, интернет-торговля и товары для потребителей
-                    </div>
-                </label>
-                
-                <label class="industry-option" for="industry_HEALTH">
-                    <input type="radio" name="industry" value="HEALTH" id="industry_HEALTH">
-                    <div class="industry-icon">
-                        <i class="fas fa-heartbeat"></i>
-                    </div>
-                    <div class="industry-title">Здравоохранение</div>
-                    <div class="industry-description">
-                        Медицинские услуги, фармацевтика и здоровье
-                    </div>
-                </label>
-                
-                <label class="industry-option" for="industry_EDUCATION">
-                    <input type="radio" name="industry" value="EDUCATION" id="industry_EDUCATION">
-                    <div class="industry-icon">
-                        <i class="fas fa-graduation-cap"></i>
+                {% endfor %}
                     </div>
                     <div class="industry-title">Образование</div>
                     <div class="industry-description">

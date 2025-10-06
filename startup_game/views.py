@@ -47,11 +47,27 @@ def industry_select(request):
             # Завершаем текущие активные сессии
             GameSession.objects.filter(user=request.user, is_active=True).update(is_active=False)
             
+            # Генерируем случайные характеристики индустрии для реиграбельности
+            industry_stats = {
+                'competition': random.randint(1, 10),
+                'regulatory_barriers': random.randint(1, 10),
+                'profitability': random.randint(1, 10),
+                'entry_cost': random.randint(1, 10),
+                'growth_potential': random.randint(1, 10),
+            }
+            
             # Создаем новую игровую сессию
             session = GameSession.objects.create(
                 user=request.user,
                 company_name=company_name,
                 industry=industry,
+                # Характеристики индустрии
+                industry_competition=industry_stats['competition'],
+                industry_regulatory_barriers=industry_stats['regulatory_barriers'],
+                industry_profitability=industry_stats['profitability'],
+                industry_entry_cost=industry_stats['entry_cost'],
+                industry_growth_potential=industry_stats['growth_potential'],
+                # Основные параметры
                 money=500,  # Стартовая сумма 500$
                 reputation=0,
                 employees=1,
@@ -74,9 +90,34 @@ def industry_select(request):
             
             return redirect('startup_game:play')
     
+    # Генерируем превью характеристик для каждой индустрии
+    industries = [
+        ('IT', 'Информационные технологии'),
+        ('FOOD', 'Еда и рестораны'),
+        ('RETAIL', 'Розничная торговля'),
+        ('HEALTH', 'Здравоохранение'),
+        ('EDUCATION', 'Образование'),
+    ]
+    
+    industry_previews = []
+    for code, name in industries:
+        preview = {
+            'code': code,
+            'name': name,
+            'stats': {
+                'competition': random.randint(1, 10),
+                'regulatory_barriers': random.randint(1, 10),
+                'profitability': random.randint(1, 10),
+                'entry_cost': random.randint(1, 10),
+                'growth_potential': random.randint(1, 10),
+            }
+        }
+        industry_previews.append(preview)
+    
     context = {
         'page_title': 'Выбор отрасли - Startup Simulator',
-        'company_name': company_name
+        'company_name': company_name,
+        'industry_previews': industry_previews
     }
     return render(request, 'startup_game/industry_select.html', context)
 

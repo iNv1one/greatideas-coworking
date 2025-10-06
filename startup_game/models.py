@@ -17,6 +17,14 @@ class GameSession(models.Model):
         ('HEALTH', 'Здравоохранение'),
         ('EDUCATION', 'Образование'),
     ])
+    
+    # Характеристики индустрии (генерируются случайно для каждой игры)
+    industry_competition = models.IntegerField(default=5, help_text="Уровень конкуренции (1-10)")
+    industry_regulatory_barriers = models.IntegerField(default=5, help_text="Регуляторные барьеры (1-10)")
+    industry_profitability = models.IntegerField(default=5, help_text="Прибыльность (1-10)")
+    industry_entry_cost = models.IntegerField(default=5, help_text="Стоимость входа (1-10)")
+    industry_growth_potential = models.IntegerField(default=5, help_text="Потенциал роста (1-10)")
+    
     money = models.IntegerField(default=500)  # Деньги
     reputation = models.IntegerField(default=0)  # Репутация
     employees = models.IntegerField(default=1)  # Сотрудники
