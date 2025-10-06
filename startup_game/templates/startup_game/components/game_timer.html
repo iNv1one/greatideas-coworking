@@ -4,11 +4,12 @@
         <div class="time-display">
             <span class="time-value" id="gameTime">08:00</span>
         </div>
-        <div class="day-progress">
+        <div class="event-progress">
             <div class="progress-bar">
-                <div class="progress-fill" id="timeProgress" style="width: 33%"></div>
+                <div class="progress-fill" id="eventProgress" style="width: 0%"></div>
                 <div class="progress-marker"></div>
             </div>
+            <div class="progress-label">До следующего события</div>
         </div>
         <div class="day-counter">
             <span class="day-label">DAY:</span>
@@ -50,10 +51,17 @@
     text-shadow: 0 0 10px rgba(255, 165, 0, 0.5);
 }
 
-.day-progress {
+.event-progress {
     position: relative;
     width: 200px;
     height: 8px;
+}
+
+.progress-label {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-align: center;
+    margin-top: 2px;
 }
 
 .progress-bar {
@@ -134,7 +142,7 @@
         font-size: 1.2rem;
     }
     
-    .day-progress {
+    .event-progress {
         width: 120px;
     }
 }
@@ -152,9 +160,8 @@ function updateGameTimer(gameTime, gameDay) {
     document.getElementById('gameTime').textContent = timeString;
     document.getElementById('gameDay').textContent = gameDay;
     
-    // Обновляем прогресс-бар (день = 24 часа = 1440 минут)
-    const progressPercent = (gameTime / 1440) * 100;
-    document.getElementById('timeProgress').style.width = progressPercent + '%';
+    // Обновляем событийный прогресс-бар
+    updateEventProgress();
 }
 
 // Автоматическое обновление времени каждую секунду
@@ -162,6 +169,8 @@ let currentGameTime = 480; // Значение по умолчанию
 let currentGameDay = 1;
 let gamePaused = false;
 let currentMoney = 500;
+let nextEventTime = 0; // Время до следующего события в секундах
+let eventTimeLeft = 0; // Оставшееся время до события
 
 function startGameTimer() {
     setInterval(() => {
@@ -206,12 +215,39 @@ function updateMoneyDisplay() {
     }
 }
 
+// Обновление событийного прогресса
+function updateEventProgress() {
+    if (eventTimeLeft <= 0) {
+        // Устанавливаем время до следующего события (20-40 секунд)
+        eventTimeLeft = 20 + Math.random() * 20;
+        nextEventTime = eventTimeLeft;
+    }
+    
+    eventTimeLeft--;
+    
+    // Обновляем прогресс-бар (от 0% до 100%)
+    const progressPercent = ((nextEventTime - eventTimeLeft) / nextEventTime) * 100;
+    document.getElementById('eventProgress').style.width = progressPercent + '%';
+    
+    // Если время вышло, показываем событие
+    if (eventTimeLeft <= 0) {
+        triggerRandomEvent();
+    }
+}
+
 // Проверка событий
 function checkForEvents() {
     // Первое событие происходит на 4-6 день
     if (currentGameDay >= 4 && currentGameDay <= 6 && !hasEventOccurred('startup_idea')) {
         triggerEvent('startup_idea');
     }
+}
+
+// Запуск случайного события
+function triggerRandomEvent() {
+    const events = ['market_research', 'investor_meeting', 'team_building', 'product_launch'];
+    const randomEvent = events[Math.floor(Math.random() * events.length)];
+    triggerEvent(randomEvent);
 }
 
 // Проверка, произошло ли событие
@@ -383,6 +419,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     updateGameTimer(currentGameTime, currentGameDay);
     updateMoneyDisplay();
+    
+    // Инициализируем событийный таймер
+    eventTimeLeft = 15 + Math.random() * 10; // 15-25 секунд до первого события
+    nextEventTime = eventTimeLeft;
+    
     startGameTimer();
 });
 </script>

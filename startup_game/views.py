@@ -169,6 +169,14 @@ def game_play(request):
                 session_data['last_event_day'] = session.last_event_day
             if hasattr(session, 'dice_roll'):
                 session_data['dice_roll'] = session.dice_roll
+            
+            # Добавляем навыки (пока статичные значения)
+            session_data['skills'] = {
+                'prototype': 5,
+                'presentation': 3,
+                'pitching': 2,
+                'team': 1
+            }
         
         context = {
             'session': session,

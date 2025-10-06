@@ -96,6 +96,146 @@ body {
     padding: 20px;
     min-height: 400px;
 }
+
+/* Заголовки сайдбаров */
+.sidebar-title {
+    color: white;
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 11px;
+}
+
+/* Навыки */
+.skills-sidebar {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.skill-item-small {
+    display: flex;
+    align-items: center;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.skill-icon-small {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+    font-size: 12px;
+}
+
+/* Пастельные цвета для навыков */
+.skill-item-small.prototype .skill-icon-small {
+    background: linear-gradient(135deg, #E8F5E8, #C8E6C9);
+    color: #388E3C;
+}
+
+.skill-item-small.presentation .skill-icon-small {
+    background: linear-gradient(135deg, #E3F2FD, #BBDEFB);
+    color: #1976D2;
+}
+
+.skill-item-small.pitching .skill-icon-small {
+    background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+    color: #F57C00;
+}
+
+.skill-item-small.team .skill-icon-small {
+    background: linear-gradient(135deg, #F3E5F5, #E1BEE7);
+    color: #7B1FA2;
+}
+
+.skill-info-small {
+    flex: 1;
+}
+
+.skill-value-small {
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    line-height: 1.2;
+}
+
+.skill-label-small {
+    font-size: 9px;
+    color: rgba(255,255,255,0.8);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.1;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .stats-sidebar,
+    .skills-sidebar {
+        margin-bottom: 15px;
+    }
+    
+    .stat-item-small,
+    .skill-item-small {
+        padding: 6px;
+        margin-bottom: 8px !important;
+    }
+    
+    .stat-icon-small,
+    .skill-icon-small {
+        width: 25px;
+        height: 25px;
+        font-size: 10px;
+        margin-right: 8px;
+    }
+    
+    .stat-value-small,
+    .skill-value-small {
+        font-size: 14px;
+    }
+    
+    .stat-label-small,
+    .skill-label-small {
+        font-size: 8px;
+    }
+    
+    .sidebar-title {
+        font-size: 10px;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .stat-item-small,
+    .skill-item-small {
+        padding: 5px;
+    }
+    
+    .stat-icon-small,
+    .skill-icon-small {
+        width: 22px;
+        height: 22px;
+        font-size: 9px;
+        margin-right: 6px;
+    }
+    
+    .stat-value-small,
+    .skill-value-small {
+        font-size: 12px;
+    }
+    
+    .stat-label-small,
+    .skill-label-small {
+        font-size: 7px;
+    }
+}
 </style>
 {% endblock %}
 
@@ -120,14 +260,33 @@ document.addEventListener('DOMContentLoaded', function() {
         employees: parseInt(sessionData.employees || 1),
         customers: parseInt(sessionData.customers || 0),
         day: parseInt(sessionData.day || 1),
-        level: parseInt(sessionData.level || 1)
+        level: parseInt(sessionData.level || 1),
+        skills: sessionData.skills || {
+            prototype: 5,
+            presentation: 3,
+            pitching: 2,
+            team: 1
+        }
     };
     
     // Обновляем интерфейс
     if (typeof updateGameData === 'function') {
         updateGameData(window.gameData);
     }
+    
+    // Обновляем навыки
+    updateSkillsDisplay();
 });
+
+// Функция обновления отображения навыков
+function updateSkillsDisplay() {
+    if (window.gameData && window.gameData.skills) {
+        document.getElementById('prototype-skill').textContent = window.gameData.skills.prototype;
+        document.getElementById('presentation-skill').textContent = window.gameData.skills.presentation;
+        document.getElementById('pitching-skill').textContent = window.gameData.skills.pitching;
+        document.getElementById('team-skill').textContent = window.gameData.skills.team;
+    }
+}
 </script>
 {% endif %}
 {% endblock %}
@@ -155,8 +314,9 @@ document.addEventListener('DOMContentLoaded', function() {
         <!-- Основной контент -->        
         <div class="row">
             <!-- Левый столбец - Статистика -->
-            <div class="col-md-3">
+            <div class="col-lg-6 col-md-6 col-6">
                 <div class="stats-sidebar">
+                    <h6 class="sidebar-title">Ресурсы</h6>
                     <div class="stat-item-small money mb-2">
                         <div class="stat-icon-small">
                             <i class="fas fa-dollar-sign"></i>
@@ -199,11 +359,51 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             
-            <!-- Правый столбец - Основная область -->
-            <div class="col-md-9">
-                <!-- Здесь будет основной игровой контент -->
-                <div class="main-game-area">
-                    <p class="text-white text-center">Игровая область</p>
+
+            
+            <!-- Правый столбец - Навыки -->
+            <div class="col-lg-6 col-md-6 col-6">
+                <div class="skills-sidebar">
+                    <h6 class="sidebar-title">Навыки</h6>
+                    <div class="skill-item-small prototype mb-2">
+                        <div class="skill-icon-small">
+                            <i class="fas fa-drafting-compass"></i>
+                        </div>
+                        <div class="skill-info-small">
+                            <div class="skill-value-small" id="prototype-skill">5</div>
+                            <div class="skill-label-small">Разработка прототипа</div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item-small presentation mb-2">
+                        <div class="skill-icon-small">
+                            <i class="fas fa-presentation"></i>
+                        </div>
+                        <div class="skill-info-small">
+                            <div class="skill-value-small" id="presentation-skill">3</div>
+                            <div class="skill-label-small">Создание презентаций</div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item-small pitching mb-2">
+                        <div class="skill-icon-small">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="skill-info-small">
+                            <div class="skill-value-small" id="pitching-skill">2</div>
+                            <div class="skill-label-small">Проведение питчингов</div>
+                        </div>
+                    </div>
+                    
+                    <div class="skill-item-small team mb-2">
+                        <div class="skill-icon-small">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="skill-info-small">
+                            <div class="skill-value-small" id="team-skill">1</div>
+                            <div class="skill-label-small">Набор команды</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
