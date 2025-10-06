@@ -60,7 +60,12 @@ def industry_select(request):
                 level=1,
                 game_time=480,  # 8:00 утра
                 is_active=True,
-                game_paused=False
+                game_paused=False,
+                # Сбрасываем все навыки в 0 для новой игры
+                prototype_skill=0,
+                presentation_skill=0,
+                pitching_skill=0,
+                team_skill=0
             )
             
             # Очищаем временные данные из сессии
@@ -123,6 +128,15 @@ def game_play(request):
                             defaults['last_event_day'] = 0
                         if 'dice_roll' in model_fields:
                             defaults['dice_roll'] = 1
+                        # Сбрасываем навыки для новой игры
+                        if 'prototype_skill' in model_fields:
+                            defaults['prototype_skill'] = 0
+                        if 'presentation_skill' in model_fields:
+                            defaults['presentation_skill'] = 0
+                        if 'pitching_skill' in model_fields:
+                            defaults['pitching_skill'] = 0
+                        if 'team_skill' in model_fields:
+                            defaults['team_skill'] = 0
                     except:
                         pass  # Игнорируем ошибки с базой данных
                     
@@ -273,7 +287,12 @@ def new_game(request):
         customers=0,
         day=1,
         level=1,
-        is_active=True
+        is_active=True,
+        # Сбрасываем все навыки в 0 для новой игры
+        prototype_skill=0,
+        presentation_skill=0,
+        pitching_skill=0,
+        team_skill=0
     )
     
     return redirect('startup_game:play')

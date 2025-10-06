@@ -643,8 +643,8 @@ function createSkillOrb() {
     orb.textContent = skillType.icon;
     orb.setAttribute('data-skill', skillType.type);
     
-    // Случайная позиция по горизонтали
-    const leftPosition = Math.random() * (window.innerWidth - 50);
+    // Случайная позиция по горизонтали (учитываем новый размер кружочка)
+    const leftPosition = Math.random() * (window.innerWidth - 120);
     orb.style.left = leftPosition + 'px';
     
     // Добавляем обработчик клика
@@ -673,6 +673,12 @@ function handleSkillOrbClick(orb, skillType) {
     // Предотвращаем повторные клики
     orb.style.pointerEvents = 'none';
     orb.classList.add('clicked');
+    
+    // Небольшая анимация нажатия
+    orb.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        orb.style.transform = 'scale(1)';
+    }, 100);
     
     // Увеличиваем навык
     currentSkills[skillType.type]++;
@@ -708,17 +714,26 @@ function handleSkillOrbClick(orb, skillType) {
 
 // Анимация полета кружочка к навыку
 function animateOrbToSkill(orb, skillElement) {
+    // Останавливаем базовую анимацию подъема
+    orb.style.animation = 'none';
+    
     const orbRect = orb.getBoundingClientRect();
     const skillRect = skillElement.getBoundingClientRect();
     
-    // Вычисляем расстояние
-    const deltaX = skillRect.left + skillRect.width/2 - orbRect.left - orbRect.width/2;
-    const deltaY = skillRect.top + skillRect.height/2 - orbRect.top - orbRect.height/2;
+    // Вычисляем расстояние от текущей позиции кружочка до навыка
+    const deltaX = skillRect.left + skillRect.width/2 - (orbRect.left + orbRect.width/2);
+    const deltaY = skillRect.top + skillRect.height/2 - (orbRect.top + orbRect.height/2);
     
-    // Применяем кастомную анимацию
-    orb.style.transition = 'all 0.8s ease-out';
-    orb.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.3)`;
-    orb.style.opacity = '0';
+    // Убираем стандартную анимацию float-up и применяем нашу
+    orb.style.transition = 'all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    orb.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.2)`;
+    orb.style.opacity = '0.8';
+    
+    // Через полсекунды делаем финальное исчезновение
+    setTimeout(() => {
+        orb.style.opacity = '0';
+        orb.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.1)`;
+    }, 600);
     
     // Удаляем элемент после анимации
     setTimeout(() => {
