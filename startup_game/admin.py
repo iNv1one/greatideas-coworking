@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import GameSession, GameEvent, Achievement, UserAchievement, EventTemplate, EventChoice
+from .models import GameSession, GameEvent, Achievement, UserAchievement, EventTemplate, EventChoice, Skill
 
 
 @admin.register(GameSession)
@@ -35,10 +35,11 @@ class EventChoiceInline(admin.TabularInline):
     extra = 1
     fields = [
         'choice_id', 'title', 'description', 'order',
-        'time_cost', 'money_cost', 'button_style',
+        'time_cost', 'money_cost', 'button_style', 'skills',
         'money_effect', 'reputation_effect', 'employees_effect', 'customers_effect',
-        'prototype_skill_effect', 'presentation_skill_effect', 'pitching_skill_effect', 'team_skill_effect'
+        'prototype_skill_effect', 'presentation_skill_effect', 'pitching_skill_effect', 'team_skill_effect', 'marketing_skill_effect'
     ]
+    filter_horizontal = ['skills']
 
 
 @admin.register(EventTemplate)
@@ -75,9 +76,32 @@ class EventChoiceAdmin(admin.ModelAdmin):
             'fields': ('money_effect', 'reputation_effect', 'employees_effect', 'customers_effect')
         }),
         ('Эффекты на навыки', {
-            'fields': ('prototype_skill_effect', 'presentation_skill_effect', 'pitching_skill_effect', 'team_skill_effect')
+            'fields': ('prototype_skill_effect', 'presentation_skill_effect', 'pitching_skill_effect', 'team_skill_effect', 'marketing_skill_effect')
+        }),
+        ('Связанные навыки', {
+            'fields': ('skills',)
         }),
         ('Внешний вид', {
             'fields': ('button_style',)
+        }),
+    )
+    filter_horizontal = ['skills']
+
+
+@admin.register(Skill)
+class SkillAdmin(admin.ModelAdmin):
+    list_display = ['display_name', 'name', 'color', 'is_active', 'order']
+    list_filter = ['is_active']
+    search_fields = ['name', 'display_name', 'description']
+    
+    fieldsets = (
+        ('Основная информация', {
+            'fields': ('name', 'display_name', 'description')
+        }),
+        ('Настройки игры', {
+            'fields': ('session_field', 'is_active', 'order')
+        }),
+        ('Внешний вид', {
+            'fields': ('color', 'icon')
         }),
     )

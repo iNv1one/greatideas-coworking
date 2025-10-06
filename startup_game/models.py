@@ -37,6 +37,7 @@ class GameSession(models.Model):
     presentation_skill = models.IntegerField(default=0)  # Презентации
     pitching_skill = models.IntegerField(default=0)  # Питчинг
     team_skill = models.IntegerField(default=0)  # Тимбилдинг
+    marketing_skill = models.IntegerField(default=0)  # Маркетинг
     
     # Игровое состояние
     is_active = models.BooleanField(default=True)
@@ -161,6 +162,10 @@ class EventChoice(models.Model):
     presentation_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка презентаций")
     pitching_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка питчинга")
     team_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка тимбилдинга")
+    marketing_skill_effect = models.IntegerField(default=0, help_text="Изменение навыка маркетинга")
+    
+    # Связанные навыки (какие орбы могут появляться)
+    skills = models.ManyToManyField('Skill', blank=True, verbose_name="Связанные навыки", help_text="Навыки, которые будут прокачиваться при этом выборе")
     
     # Стиль кнопки
     BUTTON_STYLES = [
@@ -181,3 +186,25 @@ class EventChoice(models.Model):
     
     def __str__(self):
         return f"{self.event_template.title} - {self.title}"
+
+
+class Skill(models.Model):
+    """Модель для навыков, которые можно прокачивать в игре"""
+    name = models.CharField(max_length=50, unique=True, verbose_name="Ключ навыка", help_text="Уникальный ключ навыка (например: prototype)")
+    display_name = models.CharField(max_length=100, verbose_name="Отображаемое название", help_text="Название для пользователя")
+    color = models.CharField(max_length=7, default="#007bff", verbose_name="Цвет орба (HEX)", help_text="Цвет орба в формате #RRGGBB")
+    icon = models.CharField(max_length=50, blank=True, verbose_name="Иконка (Bootstrap Icons)", help_text="Класс иконки Bootstrap Icons")
+    description = models.TextField(blank=True, verbose_name="Описание навыка")
+    is_active = models.BooleanField(default=True, verbose_name="Активен")
+    order = models.IntegerField(default=0, verbose_name="Порядок отображения", help_text="Меньше = выше в списке")
+    
+    # Соответствие с полями в GameSession
+    session_field = models.CharField(max_length=50, verbose_name="Поле в сессии", help_text="Название поля в GameSession (например: prototype_skill)")
+    
+    class Meta:
+        verbose_name = "Навык"
+        verbose_name_plural = "Навыки"
+        ordering = ['order', 'name']
+    
+    def __str__(self):
+        return self.display_name

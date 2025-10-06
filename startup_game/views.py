@@ -558,7 +558,7 @@ def get_events_api(request):
     """API для получения событий из базы данных"""
     from .models import EventTemplate
     
-    events = EventTemplate.objects.filter(is_active=True).prefetch_related('choices').order_by('order')
+    events = EventTemplate.objects.filter(is_active=True).prefetch_related('choices__skills').order_by('order')
     
     events_data = {}
     for event in events:
@@ -582,6 +582,19 @@ def get_events_api(request):
                 effects['pitching_skill'] = choice.pitching_skill_effect
             if choice.team_skill_effect != 0:
                 effects['team_skill'] = choice.team_skill_effect
+            if choice.marketing_skill_effect != 0:
+                effects['marketing_skill'] = choice.marketing_skill_effect
+            
+            # Получаем связанные навыки
+            related_skills = []
+            for skill in choice.skills.filter(is_active=True).order_by('order'):
+                related_skills.append({
+                    'name': skill.name,
+                    'displayName': skill.display_name,
+                    'color': skill.color,
+                    'icon': skill.icon,
+                    'sessionField': skill.session_field
+                })
             
             choices_data.append({
                 'id': choice.choice_id,
@@ -590,7 +603,8 @@ def get_events_api(request):
                 'timeCost': choice.time_cost,
                 'moneyCost': choice.money_cost,
                 'effects': effects,
-                'buttonStyle': choice.button_style
+                'buttonStyle': choice.button_style,
+                'skills': related_skills  # Добавляем информацию о навыках
             })
         
         events_data[event.key] = {

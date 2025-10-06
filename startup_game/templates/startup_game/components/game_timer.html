@@ -441,6 +441,9 @@ function makeChoice(choiceId, eventKey) {
     // Применяем затраты и эффекты
     applyChoiceEffects(choice);
     
+    // Обновляем доступные навыки для орбов
+    updateAvailableSkills(choice);
+    
     // Планируем следующее событие с учетом временных затрат
     scheduleNextEvent(choice.timeCost);
     
@@ -679,8 +682,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Система кружочков навыков
 let skillOrbInterval = null;
 let activeOrbs = [];
+let availableSkills = []; // Навыки, доступные для орбов (зависят от последнего выбора)
 
-// Определяем навыки с их цветами и иконками
+// Определяем навыки с их цветами и иконками (fallback для старой системы)
 const skillTypes = [
     { type: 'prototype', icon: '⚙️', name: 'Разработка прототипа' },
     { type: 'presentation', icon: '📊', name: 'Презентации' },
@@ -747,16 +751,55 @@ function startSkillOrbSystem() {
     }, 2000 + Math.random() * 2000); // 2-4 секунды
 }
 
+// Обновление доступных навыков на основе выбора
+function updateAvailableSkills(choice) {
+    if (choice.skills && choice.skills.length > 0) {
+        // Используем навыки из выбора
+        availableSkills = choice.skills.map(skill => ({
+            type: skill.name,
+            icon: skill.icon || getSkillIcon(skill.name),
+            name: skill.displayName,
+            color: skill.color,
+            sessionField: skill.sessionField
+        }));
+        console.log('Обновлены доступные навыки:', availableSkills);
+    } else {
+        // Fallback: используем все навыки
+        availableSkills = [...skillTypes];
+        console.log('Используются все навыки (fallback)');
+    }
+}
+
+// Получение иконки для навыка (fallback)
+function getSkillIcon(skillName) {
+    const iconMap = {
+        'prototype': '⚙️',
+        'presentation': '📊',
+        'pitching': '🎯',
+        'team': '👥'
+    };
+    return iconMap[skillName] || '⭐';
+}
+
 // Создание кружочка навыка
 function createSkillOrb() {
-    // Выбираем случайный навык
-    const skillType = skillTypes[Math.floor(Math.random() * skillTypes.length)];
+    // Используем доступные навыки или fallback
+    const skillsToUse = availableSkills.length > 0 ? availableSkills : skillTypes;
+    
+    // Выбираем случайный навык из доступных
+    const skillType = skillsToUse[Math.floor(Math.random() * skillsToUse.length)];
     
     // Создаем элемент кружочка
     const orb = document.createElement('div');
     orb.className = `skill-orb ${skillType.type}`;
     orb.textContent = skillType.icon;
     orb.setAttribute('data-skill', skillType.type);
+    
+    // Применяем кастомный цвет, если он есть
+    if (skillType.color) {
+        orb.style.background = `linear-gradient(135deg, ${skillType.color} 0%, ${skillType.color}aa 100%)`;
+        orb.style.boxShadow = `0 4px 20px ${skillType.color}66`;
+    }
     
     // Случайная позиция по горизонтали (учитываем новый размер кружочка)
     const leftPosition = Math.random() * (window.innerWidth - 120);
