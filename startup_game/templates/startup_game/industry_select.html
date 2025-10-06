@@ -31,14 +31,15 @@ body {
 .game-dialog {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 20px;
-    padding: 40px;
-    max-width: 600px;
+    padding: 40px 40px 120px 40px; /* Добавляем место для кнопки */
+    max-width: 900px;
     width: 90%;
     box-shadow: 0 20px 40px rgba(0,0,0,0.3);
     backdrop-filter: blur(10px);
     text-align: center;
-    max-height: 80vh;
-    overflow-y: auto;
+    max-height: 85vh;
+    overflow: hidden; /* Убираем вертикальную прокрутку */
+    position: relative;
 }
 
 .game-dialog h2 {
@@ -54,10 +55,28 @@ body {
 }
 
 .industry-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 15px;
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px 0 20px 0;
     margin-bottom: 30px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+}
+
+.industry-grid::-webkit-scrollbar {
+    height: 8px;
+}
+
+.industry-grid::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.industry-grid::-webkit-scrollbar-thumb {
+    background: linear-gradient(45deg, #FF6B35, #F39C12);
+    border-radius: 10px;
 }
 
 .industry-option {
@@ -68,6 +87,11 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
+    min-width: 280px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .industry-option:hover {
@@ -115,7 +139,10 @@ body {
     font-weight: 600;
     color: white;
     transition: all 0.3s ease;
-    width: 100%;
+    position: absolute;
+    bottom: 30px;
+    left: 40px;
+    right: 40px;
 }
 
 .btn-game-primary:hover {
@@ -176,16 +203,22 @@ body {
 
 @media (max-width: 768px) {
     .game-dialog {
-        padding: 30px 20px;
-        margin: 20px;
-    }
-    
-    .industry-grid {
-        grid-template-columns: 1fr;
+        padding: 20px 20px 100px 20px;
+        margin: 10px;
+        width: 95%;
     }
     
     .industry-option {
+        min-width: 250px;
         padding: 15px;
+    }
+    
+    .btn-game-primary {
+        left: 20px;
+        right: 20px;
+        bottom: 20px;
+        padding: 12px 30px;
+        font-size: 1rem;
     }
     
     .stat-item {
@@ -194,6 +227,11 @@ body {
     
     .stat-label, .stat-value {
         font-size: 0.7rem;
+    }
+    
+    .industry-grid {
+        padding: 10px 0;
+        gap: 15px;
     }
 }
 </style>
@@ -296,9 +334,31 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.checked) {
                 this.parentElement.classList.add('selected');
                 continueBtn.disabled = false;
+                
+                // Прокручиваем к выбранному элементу
+                this.parentElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest',
+                    inline: 'center'
+                });
             }
         });
     });
+    
+    // Добавляем подсказку о возможности прокрутки
+    const industryGrid = document.querySelector('.industry-grid');
+    if (industryGrid) {
+        // Проверяем, нужна ли прокрутка
+        if (industryGrid.scrollWidth > industryGrid.clientWidth) {
+            // Добавляем анимацию для привлечения внимания
+            setTimeout(() => {
+                industryGrid.scrollLeft = 50;
+                setTimeout(() => {
+                    industryGrid.scrollLeft = 0;
+                }, 500);
+            }, 1000);
+        }
+    }
 });
 </script>
 {% endblock %}
