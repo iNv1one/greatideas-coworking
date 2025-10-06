@@ -622,71 +622,13 @@ function applyChoiceEffects(choice) {
     return true;
 }
 
-// Показ результата выбора
+// Показ результата выбора (сразу закрываем модалку)
 function showChoiceResult(choice, eventKey) {
-    const description = document.getElementById('eventDescription');
-    const choices = document.getElementById('eventChoices');
-    
-    // Формируем текст результата
-    let resultText = `Выбор "${choice.text}" выполнен!`;
-    
-    // Добавляем информацию о затратах
-    const timeText = choice.timeCost === 1 ? '1 день' : `${choice.timeCost} дня`;
-    if (choice.moneyCost > 0) {
-        resultText += ` Потрачено: ${timeText} времени и $${choice.moneyCost}.`;
-    } else {
-        resultText += ` Потрачено: ${timeText} времени.`;
-    }
-    
-    // Добавляем информацию об эффектах
-    if (choice.effects) {
-        const effects = [];
-        Object.keys(choice.effects).forEach(effect => {
-            const value = choice.effects[effect];
-            switch(effect) {
-                case 'money':
-                    effects.push(`+$${value}`);
-                    break;
-                case 'reputation':
-                    effects.push(`+${value} репутация`);
-                    break;
-                case 'employees':
-                    effects.push(`+${value} сотрудник${value > 1 ? 'а' : ''}`);
-                    break;
-                case 'customers':
-                    effects.push(`+${value} клиент${value > 1 ? 'а' : ''}`);
-                    break;
-                case 'prototype_skill':
-                    effects.push(`+${value} навык разработки`);
-                    break;
-                case 'presentation_skill':
-                    effects.push(`+${value} навык презентаций`);
-                    break;
-                case 'pitching_skill':
-                    effects.push(`+${value} навык питчинга`);
-                    break;
-                case 'team_skill':
-                    effects.push(`+${value} навык тимбилдинга`);
-                    break;
-            }
-        });
-        
-        if (effects.length > 0) {
-            resultText += ` Получено: ${effects.join(', ')}.`;
-        }
-    }
-    
-    resultText += ` Следующее событие произойдет через ${choice.timeCost === 1 ? '1 день' : `${choice.timeCost} дня`}.`;
-    
-    description.textContent = resultText;
-    choices.innerHTML = `
-        <button class="btn btn-success" onclick="continueGame()">
-            Продолжить игру
-        </button>
-    `;
-    
     // Синхронизируем с сервером
     syncChoiceWithServer(choice.id, eventKey);
+    
+    // Сразу закрываем модалку и продолжаем игру (без окна подтверждения)
+    continueGame();
 }
 
 // Планирование следующего события
@@ -973,7 +915,18 @@ function createSkillOrb() {
     // Создаем элемент кружочка
     const orb = document.createElement('div');
     orb.className = `skill-orb ${skillType.type}`;
-    orb.textContent = skillType.icon;
+    
+    // Правильно отображаем иконки (Bootstrap Icons или эмоджи)
+    if (skillType.icon && skillType.icon.startsWith('bi-')) {
+        // Bootstrap иконка
+        const iconElement = document.createElement('i');
+        iconElement.className = `bi ${skillType.icon}`;
+        orb.appendChild(iconElement);
+    } else {
+        // Эмоджи или текст
+        orb.textContent = skillType.icon || '⭐';
+    }
+    
     orb.setAttribute('data-skill', skillType.type);
     
     // Применяем кастомный цвет, если он есть
