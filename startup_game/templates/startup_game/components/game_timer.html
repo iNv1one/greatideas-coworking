@@ -262,6 +262,14 @@ function triggerEvent(eventId) {
     
     if (eventId === 'startup_idea') {
         showStartupIdeaEvent();
+    } else if (eventId === 'market_research') {
+        showMarketResearchEvent();
+    } else if (eventId === 'investor_meeting') {
+        showInvestorMeetingEvent();
+    } else if (eventId === 'team_building') {
+        showTeamBuildingEvent();
+    } else if (eventId === 'product_launch') {
+        showProductLaunchEvent();
     }
 }
 
@@ -316,6 +324,126 @@ function createEventModal() {
     `;
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+// Событие "Исследование рынка"
+function showMarketResearchEvent() {
+    const modal = document.getElementById('eventModal');
+    if (!modal) {
+        createEventModal();
+    }
+    
+    const title = document.getElementById('eventTitle');
+    const description = document.getElementById('eventDescription');
+    const choices = document.getElementById('eventChoices');
+    
+    title.textContent = 'Исследование рынка';
+    description.textContent = 'Настало время изучить ваш рынок. Как вы планируете это сделать?';
+    
+    choices.innerHTML = `
+        <button class="btn btn-success event-choice" onclick="makeChoice('survey')">
+            Провести онлайн-опрос потенциальных клиентов
+        </button>
+        <button class="btn btn-info event-choice" onclick="makeChoice('competitors')">
+            Глубоко изучить конкурентов и их стратегии
+        </button>
+        <button class="btn btn-warning event-choice" onclick="makeChoice('focus_group')">
+            Организовать фокус-группу для обратной связи
+        </button>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Событие "Встреча с инвестором"
+function showInvestorMeetingEvent() {
+    const modal = document.getElementById('eventModal');
+    if (!modal) {
+        createEventModal();
+    }
+    
+    const title = document.getElementById('eventTitle');
+    const description = document.getElementById('eventDescription');
+    const choices = document.getElementById('eventChoices');
+    
+    title.textContent = 'Встреча с инвестором';
+    description.textContent = 'У вас есть возможность встретиться с потенциальным инвестором. Какую стратегию выберете?';
+    
+    choices.innerHTML = `
+        <button class="btn btn-primary event-choice" onclick="makeChoice('passionate')">
+            Страстно рассказать о своей идее и видении
+        </button>
+        <button class="btn btn-secondary event-choice" onclick="makeChoice('numbers')">
+            Сосредоточиться на цифрах и бизнес-плане
+        </button>
+        <button class="btn btn-success event-choice" onclick="makeChoice('demo')">
+            Показать работающий прототип или демо
+        </button>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Событие "Набор команды"
+function showTeamBuildingEvent() {
+    const modal = document.getElementById('eventModal');
+    if (!modal) {
+        createEventModal();
+    }
+    
+    const title = document.getElementById('eventTitle');
+    const description = document.getElementById('eventDescription');
+    const choices = document.getElementById('eventChoices');
+    
+    title.textContent = 'Формирование команды';
+    description.textContent = 'Ваш стартап растет, и вам нужны новые люди. Кого искать в первую очередь?';
+    
+    choices.innerHTML = `
+        <button class="btn btn-info event-choice" onclick="makeChoice('developer')">
+            Найти опытного разработчика
+        </button>
+        <button class="btn btn-warning event-choice" onclick="makeChoice('marketer')">
+            Привлечь специалиста по маркетингу
+        </button>
+        <button class="btn btn-danger event-choice" onclick="makeChoice('cofounder')">
+            Найти со-основателя с дополнительными навыками
+        </button>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
+// Событие "Запуск продукта"
+function showProductLaunchEvent() {
+    const modal = document.getElementById('eventModal');
+    if (!modal) {
+        createEventModal();
+    }
+    
+    const title = document.getElementById('eventTitle');
+    const description = document.getElementById('eventDescription');
+    const choices = document.getElementById('eventChoices');
+    
+    title.textContent = 'Запуск продукта';
+    description.textContent = 'Ваш продукт готов к запуску! Как вы планируете выходить на рынок?';
+    
+    choices.innerHTML = `
+        <button class="btn btn-success event-choice" onclick="makeChoice('beta')">
+            Сначала запустить бета-версию для тестирования
+        </button>
+        <button class="btn btn-primary event-choice" onclick="makeChoice('full_launch')">
+            Сразу полноценный запуск с маркетинговой кампанией
+        </button>
+        <button class="btn btn-secondary event-choice" onclick="makeChoice('soft_launch')">
+            Мягкий запуск для узкой аудитории
+        </button>
+    `;
+    
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
 }
 
 // Выбор решения
